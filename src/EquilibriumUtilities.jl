@@ -144,6 +144,22 @@ function converge(update::Function, step_diff::Function, init::Function; history
 end
 
 """
+	dampen(history; kwargs...)
+
+Given an iteration `history`, return a dampening factor. At the moment, just uses the last value of `history`.
+
+## Keywords
+* `slow = 0.95` : the dampening factor for slow updating (when `diff` is above 10).
+* `med = 0.75` : the dampening factor for medium updating (when `diff` is above 1).
+* `fast = 0.5` : the dampening factor for fast updating.
+"""
+function dampen(history; slow = 0.95, med = 0.75, fast = 0.5)
+	(isempty(history) || last(history) > 10) && return slow
+	last(history) > 1 && return med
+	return fast
+end
+
+"""
 	v_diff(v1, v2)
 
 Calculate the distance between two vectors as the sum of element-wise absolute difference.
@@ -154,6 +170,6 @@ function v_diff(v1, v2)
 	end
 end
 
-export newton, converge, v_diff, normalise!, zero_safe
+export newton, converge, v_diff, normalise!, zero_safe, dampen
 
 end
