@@ -144,16 +144,16 @@ function converge(update::Function, step_diff::Function, init::Function; history
 end
 
 """
-	update!(main, secondary; dampen = 0.75)
+	update!(main, secondary; dampen = 0.75, v_diff = v_diff)
 
-Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration).
+Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration). Returns the `v_diff` of the update step (useful for breaking iteration if the step size is too small).
 """
-function update!(main, secondary; dampen = 0.75)
+function update!(main, secondary; dampen = 0.75, v_diff = v_diff)
 	for (i_main, i_sec) in zip(eachindex(main), eachindex(secondary))
 		main[i_main], secondary[i_sec] = secondary[i_sec], main[i_main]
 		main[i_main] += dampen*(secondary[i_sec] - main[i_main])
 	end
-	main
+	v_diff(main, secondary)
 end
 
 """
