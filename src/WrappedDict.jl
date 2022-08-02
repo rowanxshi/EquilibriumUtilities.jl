@@ -8,6 +8,7 @@ function validate(given, needed)
 	!isempty(msg) && @warn(msg*"not provided")
 	nothing
 end
+validate(given::Dict, needed) = validate(keys(given), needed)
 
 """
 	abstract type WrappedDict{T} <: AbstractDict{Symbol, T}
