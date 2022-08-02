@@ -2,3 +2,6 @@ name = "EquilibriumUtilities"
 uuid = "815163ab-89b3-4dbd-be45-6ddfec769a7f"
 authors = ["rowan <rowanxshi@pm.me>"]
 version = "0.1.0"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
