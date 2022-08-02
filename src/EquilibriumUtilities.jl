@@ -87,10 +87,13 @@ end
 """
 	converge(update::Function, step_diff::Function, init::Function; kwargs...)
 
-Iterate until convergence. In particular, the problem is initiated with `init()`. Then, repeatedly apply `step_diff()` which should do an iteration step, then return the `diff`. `converge` will compare the returned difference with `tol`; if it's smaller, then converge is reached and iteration stops. Otherwise, it will apply `update()`, then continue iterating.
+Iterate until convergence. In particular, the problem is initiated with `init()`. Then, repeatedly apply `step_diff()` which should do an iteration step, then return the `diff`. `converge` will compare the returned difference with `tol`; if it's smaller, then converge is reached and iteration stops. Otherwise, it will apply `update()`, which should return the size of the update.
+
+See also [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
 
 ## Keywords
-* `tol::Real = 1e-6` : If the `diff` returned by `step_diff` is less than this tolerance, stop.
+* `diff_tol::Real = 1e-6` : If the value returned by `step_diff` is less than this tolerance, stop.
+* `up_tol::Real = zero(diff_tol)` : If the value returned by `update` is less than this tolerance, stop.
 * `max_iter::Integer = 200` : Maximum number of iterations before giving up.
 * `msg = "No convergence"` : Warning message to display if there isn't convergence within the maximum number of iterations.
 * `history = nothing` : Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
@@ -100,9 +103,9 @@ Iterate until convergence. In particular, the problem is initiated with `init()`
 Consider the finite-firm CES model. We iteratively find market shares among the participants.
 ```julia
 const σ = 5 # CES parameter
-const c = collect(1:10) # the marginal costs of the participants
-const s_old = Vector{Float64}(undef, length(z)) # vector to hold shares guesses
-const s_new = Vector{Float64}(undef, length(z)) # vector to hold implied shares
+const c = collect(1:0.1:2) # the marginal costs of the participants
+const s_old = Vector{Float64}(undef, length(c)) # vector to hold shares guesses
+const s_new = Vector{Float64}(undef, length(c)) # vector to hold implied shares
 
 function init()
 	# initial guess: even shares
@@ -123,24 +126,32 @@ function step_diff()
 end
 function update()
 	# use the average between guess and implied shares
+	up_diff = v_diff(s_new, s_old)/2
 	s_old .+= s_new
 	s_old ./= 2
+	up_diff
 end
 
 converge(update, step_diff, init)
 ```
 """
-function converge(update::Function, step_diff::Function, init::Function; history = nothing, tol::Real = 1e-6, max_iter::Integer = 200, msg = "No convergence", verbose::Bool = false)
+function converge(update::Function, step_diff::Function, init::Function; history = nothing, diff_tol::Real = 1e-6, up_tol::Real = zero(diff_tol), max_iter::Integer = 200, msg = "No convergence", verbose::Bool = false)
 	init()
-	diff = one(tol) + tol; 
+	diff = one(diff_tol) + diff_tol;
+	small_up = false
+	
 	for iter in 1:max_iter
 		diff = step_diff()
-		diff < tol && break
+		diff < diff_tol && break
 		verbose && @info diff
 		!isnothing(history) && push!(history, diff)
-		update()
+		up = update()
+		if (up < up_tol) && small_up
+			break # break if the update is too small twice in a row
+		end
+		(up < up_tol) && (small_up = true)
 	end
-	diff < tol || @warn msg
+	diff < diff_tol || @warn msg
 end
 
 """
@@ -183,6 +194,6 @@ function v_diff(v1, v2)
 	end
 end
 
-export newton, converge, v_diff, normalise!, zero_safe, dampen
+export newton, converge, v_diff, normalise!, zero_safe, dampen, update!
 
 end
