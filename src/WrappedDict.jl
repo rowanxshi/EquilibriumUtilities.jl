@@ -17,6 +17,8 @@ Eases creating custom `struct`s that are basically dictionaries.[^1] A concrete 
 
 For an example, see this package's tests with an implementation of a Pollak demand function `struct` as a `WrappedDict`.
 
+See also [`validate`](@ref), [`pretty`](@ref).
+
 [^1]: Essentially implements `keys`, `values`, `length`, `iterate`, `getindex`, `setindex!`, and `get` by delegating to the necessary field `internal_dict`.
 """
 abstract type WrappedDict{T} <: AbstractDict{Symbol, T} end
@@ -34,3 +36,21 @@ function Base.get(s::WrappedDict, k::Symbol, default...)
 	end
 end
 Base.getproperty(s::WrappedDict, k::Symbol) = getindex(s, k)
+
+function pretty(s::WrappedDict, var_names = keys(s); pad = 8, digits = 4, spacer = 2)
+	str = string_header(string.(var_names); pad, spacer)*"\n"
+	for line in string_tablify(s, var_names; pad, digits)
+		str *= line*"\n"
+	end
+	str
+end
+spaced_join(x; pad = 8) = join(rpad.(x, pad), "")
+function string_header(var_names; pad = 8, spacer = 2)
+	header = spaced_join(var_names; pad)
+	underline = repeat("=", pad - spacer)*repeat(" ", spacer)
+	header*"\n"*repeat(underline, length(var_names))
+end
+function string_tablify(s::WrappedDict, var_names = keys(s); pad = 8, digits = 4)
+	columns = (getproperty(s, v) for v in var_names)
+	(spaced_join(round.(line; digits); pad) for line in zip(columns...))
+end
