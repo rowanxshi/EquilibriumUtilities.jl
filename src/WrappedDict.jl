@@ -34,3 +34,26 @@ function Base.get(s::WrappedDict, k::Symbol, default...)
 	end
 end
 Base.getproperty(s::WrappedDict, k::Symbol) = getindex(s, k)
+
+function print_tablify(io::IO, s::WrappedDict, var_names = keys(s); pad = 8, digits = 4, spacer = 2)
+	println(io, string_header(string.(var_names); pad, spacer))
+	for line in string_tablify(s, var_names; pad, digits)
+		println(io, line)
+	end
+end
+function print_tablify(io::IO, s::WrappedDict, var_names, row_names; pad = 8, digits = 4, spacer = 2)
+	println(io, string_header(("", string.(var_names)...); pad, spacer))
+	for line in zip(rpad.(row_names, pad), string_tablify(s, var_names; pad, digits))
+		println(io, line...)
+	end
+end
+spaced_join(x; pad = 8) = join(rpad.(x, pad), "")
+function string_header(var_names; pad = 8, spacer = 2)
+	header = spaced_join(var_names; pad)
+	underline = repeat("=", pad - spacer)*repeat(" ", spacer)
+	header*"\n"*repeat(underline, length(var_names))
+end
+function string_tablify(s::WrappedDict, var_names = keys(s); pad = 8, digits = 4)
+	columns = (getproperty(s, v) for v in var_names)
+	(spaced_join(round.(line; digits); pad) for line in zip(columns...))
+end
