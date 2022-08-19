@@ -19,7 +19,7 @@ For an example, see this package's tests with an implementation of a Pollak dema
 
 See also [`validate`](@ref), [`pretty`](@ref).
 
-[^1]: Essentially implements `keys`, `values`, `length`, `iterate`, `getindex`, `setindex!`, and `get` by delegating to the necessary field `internal_dict`.
+[^1]: Essentially implements `keys`, `values`, `length`, `iterate`, `getindex`, `setindex!`, `get`, and `get!` by delegating to the necessary field `internal_dict`.
 """
 abstract type WrappedDict{T} <: AbstractDict{Symbol, T} end
 
@@ -29,12 +29,8 @@ Base.length(s::WrappedDict) = length(getfield(s, :internal_dict))
 Base.iterate(s::WrappedDict, state...) = iterate(getfield(s, :internal_dict), state...)
 Base.getindex(s::WrappedDict, k::Symbol) = getindex(getfield(s, :internal_dict), k)
 Base.setindex!(s::WrappedDict, value, k::Symbol) = setindex!(getfield(s, :internal_dict), value, k)
-function Base.get(s::WrappedDict, k::Symbol, default...) 
-	k ∈ keys(s) ? getindex(s, k) : begin
-		@warn "no field $k; returning the first value"
-		first(values(s))
-	end
-end
+Base.get(s::WrappedDict, k::Symbol, default) = get(getfield(s, :internal_dict), k, default)
+Base.get!(s::WrappedDict, k::Symbol, default) = get!(getfield(s, :internal_dict), k, default)
 Base.getproperty(s::WrappedDict, k::Symbol) = getindex(s, k)
 
 function pretty(s::WrappedDict, var_names = keys(s); pad = 8, digits = 4, spacer = 2)
