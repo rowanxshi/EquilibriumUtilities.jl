@@ -1,3 +1,8 @@
+"""
+	validate(given, needed)	
+
+For each key in `needed`, check that it's present in `given`.
+"""
 function validate(given, needed)
 	msg = ""
 	for f in needed
@@ -33,6 +38,16 @@ Base.get(s::WrappedDict, k::Symbol, default) = get(getfield(s, :internal_dict), 
 Base.get!(s::WrappedDict, k::Symbol, default) = get!(getfield(s, :internal_dict), k, default)
 Base.getproperty(s::WrappedDict, k::Symbol) = getindex(s, k)
 
+"""
+	pretty(s::WrappedDict, var_names = keys(s); kw...)
+
+Return a string version of `s` for pretty-printing.
+	
+# Keywords
+* `pad = 8`: column width
+* `digits = 4`: number of digits to round to
+* `spacer = 2`: number of spaces in between columns
+"""
 function pretty(s::WrappedDict, var_names = keys(s); pad = 8, digits = 4, spacer = 2)
 	str = string_header(string.(var_names); pad, spacer)*"\n"
 	for line in string_tablify(s, var_names; pad, digits)

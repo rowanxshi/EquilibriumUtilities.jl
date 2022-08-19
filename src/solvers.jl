@@ -119,7 +119,7 @@ Given an iteration `history`, return a dampening factor. At the moment, just use
 * `fast = 0.5` : the dampening factor for fast updating.
 """
 function dampen(history; slow = 0.95, med = 0.75, fast = 0.5)
-	(isempty(history) || last(history) > 10) && return slow
+	(isnothing(history) || isempty(history) || last(history) > 10) && return slow
 	last(history) > 1 && return med
 	return fast
 end
