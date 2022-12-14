@@ -64,6 +64,8 @@ end
 
 Iterate until convergence. In particular, the problem is initiated with `init()`. Then, repeatedly apply `step_diff()` which should do an iteration step, then return the `diff`. `converge` will compare the returned difference with `tol`; if it's smaller, then converge is reached and iteration stops. Otherwise, it will apply `update()`, which should return the size of the update.
 
+The function returns a pair of booleans, the first of which signals whether convergence was reached; the second signals whether iteration was aborted because the update was too small.
+
 For an example, see this package's tests which uses this function to solve the finite-firm CES game.
 
 See also [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
@@ -80,19 +82,22 @@ function converge(update::Function, step_diff::Function, init::Function; history
 	init()
 	diff = one(diff_tol) + diff_tol;
 	small_up = false
+	conv = false
 	
 	for iter in 1:max_iter
 		diff = step_diff()
-		diff < diff_tol && break
-		verbose && @info diff
 		!isnothing(history) && push!(history, diff)
+		verbose && @info diff
+		conv = (diff < diff_tol)
+		conv && break
 		up = update()
 		if (up < up_tol) && small_up
 			break # break if the update is too small twice in a row
 		end
 		(up < up_tol) && (small_up = true)
 	end
-	diff < diff_tol || @warn msg
+	!conv || @warn msg
+	conv, small_up
 end
 
 """
