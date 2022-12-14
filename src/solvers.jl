@@ -96,7 +96,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 		end
 		(up < up_tol) && (small_up = true)
 	end
-	!conv || @warn msg
+	!conv && @warn msg
 	conv, small_up
 end
 
