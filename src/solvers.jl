@@ -75,18 +75,19 @@ See also [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
 * `up_tol::Real = zero(diff_tol)` : If the value returned by `update` is less than this tolerance, stop.
 * `max_iter::Integer = 200` : Maximum number of iterations before giving up.
 * `msg = "No convergence"` : Warning message to display if there isn't convergence within the maximum number of iterations.
-* `history = nothing` : Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
+* `history = empty!(cs.history)` : Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
 * `verbose::Bool = false` : Print the `diff` every iteration?
 """
-function converge(update::Function, step_diff::Function, init::Function; history = nothing, diff_tol::Real = 1e-6, up_tol::Real = zero(diff_tol), max_iter::Integer = 200, msg = "No convergence", verbose::Bool = false)
+function converge(update::Function, step_diff::Function, init::Function; history = empty!(cs.history), diff_tol::Real = 1e-6, up_tol::Real = zero(diff_tol), max_iter::Integer = 200, msg = "No convergence", verbose::Bool = false)
 	init()
+	reset!(cs)
 	diff = one(diff_tol) + diff_tol;
 	small_up = false
 	conv = false
 	
 	for iter in 1:max_iter
 		diff = step_diff()
-		!isnothing(history) && push!(history, diff)
+		push!(history, diff)
 		verbose && @info diff
 		conv = (diff < diff_tol)
 		conv && break
@@ -101,14 +102,17 @@ function converge(update::Function, step_diff::Function, init::Function; history
 end
 
 """
-	update!(main, secondary; dampen = 0.75, v_diff = v_diff)
+	update!(main, secondary; dampen = 1.0, v_diff = v_diff)
 
 Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration). Returns the `v_diff` of the update step (useful for breaking iteration if the step size is too small).
+
+If `dampen` is set at `1.0`, [`dynamic_dampen`](@ref)ing is used.
 """
-function update!(main, secondary; dampen = 0.75, v_diff = v_diff)
+function update!(main, secondary; dampen = 1.0, v_diff = v_diff, history = cs.history, dampen_kw...)
+	_dampen = isone(dampen) ? dynamic_dampen!(cs; dampen_kw...).dampen : dampen
 	for (i_main, i_sec) in zip(eachindex(main), eachindex(secondary))
 		main[i_main], secondary[i_sec] = secondary[i_sec], main[i_main]
-		main[i_main] += dampen*(secondary[i_sec] - main[i_main])
+		main[i_main] += _dampen*(secondary[i_sec] - main[i_main])
 	end
 	v_diff(main, secondary)
 end

@@ -16,15 +16,40 @@ function reset_dampen_state!(dampen_state = _dampen_state)
 	dampen_state[:reference_diff] = Inf
 	dampen_state
 end
+"""
+	const needed_dampen_state = (:dampen, :last_loosened, :last_tightend, :reference_diff)
+	
+The fields needed for the `dampen_state` `Dict{Symbol}` of a [`ConvergenceState`](@ref).
+* `dampen`: the dampening factor
+* `last_loosened`: number of iterations since the dampening factor lowered
+* `last_tightened`: number of iterations since the dampening factor increased
+* `reference_diff`: the `diff` used when checking whether iteration is far along enough to attempt loosening again
 
-struct ConvergenceState{D <: Dict, V1 <: AbstractVector, V2 <: AbstractVector}
+See also [`dynamic_dampen`](@ref).
+"""
+const needed_dampen_state = (:dampen, :last_loosened, :last_tightened, :reference_diff)
+
+"""
+	ConvergenceState{D <: Dict{Symbol}, V1 <: AbstractVector, V2 <: AbstractVector}
+
+Keeps track of the state of a [`converge`](@ref)nce routine.
+
+Fields
+===
+* `dampen_state::Dict{Symbol}` contains the fields [`needed_dampen_state`](@ref)
+* `last_deviations::V1` for storing deviations from the last iteration
+* `penultimate_deviations::V1` for storing deviations from the penultimate iteration
+* `history` for storing the history of `diff`s
+"""
+struct ConvergenceState{D <: Dict{Symbol}, V1 <: AbstractVector, V2 <: AbstractVector}
 	dampen_state::D
 	last_deviations::V1
 	penultimate_deviations::V1
 	history::V2
 
-	function ConvergenceState{D, V1, V2}(dampen_state, last_deviations, penultimate_deviations, history) where {D <: Dict, V1 <: AbstractVector, V2 <: AbstractVector}
+	function ConvergenceState{D, V1, V2}(dampen_state, last_deviations, penultimate_deviations, history) where {D <: Dict{Symbol}, V1 <: AbstractVector, V2 <: AbstractVector}
 		(length(last_deviations) != length(penultimate_deviations)) && error("Deviation vectors need to be of the same length to compare them.")
+		validate(dampen_state, needed_dampen_state)
 		new{D, V1, V2}(dampen_state, last_deviations, penultimate_deviations, history)
 	end
 end

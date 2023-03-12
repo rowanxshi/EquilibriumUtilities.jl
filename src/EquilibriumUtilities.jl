@@ -23,9 +23,9 @@ If `x` is zero, return `one(x)`. Otherwise, return `x`. Useful for safely dividi
 """
 zero_safe(x) = iszero(x) ? one(x) : x
 
+include("WrappedDict.jl")
 include("ConvergenceState.jl")
 include("solvers.jl")
-include("WrappedDict.jl")
 
 export newton, converge, v_diff, normalise!, zero_safe, dampen, update!, WrappedDict
 
