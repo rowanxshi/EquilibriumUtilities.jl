@@ -165,9 +165,11 @@ See also [`dynamic_dampen`](@ref).
 	[^1]: If updating is too aggressive, usually one of two things happens. Either the difference blows up (if updating is _too_ aggressive) or the difference oscillates between improving and worsening (if updating is a little too aggressive).
 """
 function isdiverging(history)
-	count(0:2) do i
+	(length(history) ≤ 3) && return false
+	bads = @inbounds count(0:2) do i
 		(history[end-i] - history[end-i-1]) ≥ zero(history[end-i])
 	end
+	bads ≥ 2
 end
 """
 	isovershooting(last_deviations, penultimate_deviations; share = 0.5)
@@ -179,6 +181,7 @@ See also [`dynamic_dampen`](@ref).
 	[^1]: If dampening isn't strong enough, the devationsiations alternate between positive and negative. Convergence wastes times bouncing back and forth, usually slowing down. Increasing the dampening can drastically speed up convergence by preventing this oscillation.
 """
 function isovershooting(last_deviations, penultimate_deviations; share = 0.5)
+	(isempty(last_deviations) || isempty(penultimate_deviations)) && return false
 	overshot = count(zip(last_deviations, penultimate_deviations)) do (last, penultimate)
 		signbit(last) ⊻ signbit(penultimate)
 	end
@@ -192,8 +195,9 @@ Check if the last `tail` entries in `history` is convex. Useful for dynamically 
 See also [`dynamic_dampen`](@ref).
 """
 function isconvex(history; tail = 25, tol = 0.005)
+	(length(history) < tail) && return false
 	excerpt = @view history[end-tail+1:end]
-	all(1:(tail-1)) do i
+	@inbounds all(1:(tail-1)) do i
 		(ln(excerpt[i]) - ln(excerpt[i+1])) ≥ tol
 	end
 end
