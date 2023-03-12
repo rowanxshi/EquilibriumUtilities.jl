@@ -23,6 +23,7 @@ If `x` is zero, return `one(x)`. Otherwise, return `x`. Useful for safely dividi
 """
 zero_safe(x) = iszero(x) ? one(x) : x
 
+include("ConvergenceState.jl")
 include("solvers.jl")
 include("WrappedDict.jl")
 
