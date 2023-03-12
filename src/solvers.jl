@@ -114,6 +114,91 @@ function update!(main, secondary; dampen = 0.75, v_diff = v_diff)
 end
 
 """
+	v_diff(v1, v2)
+
+Calculate the distance between two vectors as the sum of element-wise absolute difference.
+"""
+function v_diff(v1, v2)
+	sum(zip(v1, v2)) do (x1, x2)
+		abs(x1 - x2)
+	end
+end
+
+# DYNAMIC DAMPENING
+"""
+	dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_devs, penultimate_devs, history; kw...)
+
+Update the dampening factor based on convergence path. Strategy:
+* increase by `tighten` if `history` [`isdiverging`](@ref) or [`isovershooting`](@ref)
+* make no change if any of:
+	* within the first `grace_period` iterations
+	* it has been under `tighten_wait` iterations since the last tightening
+	* it has been under `loosen_wait` iterations since the last loosening
+	* the current difference is above `scale*reference_diff`
+	* the `tail` of `history` [`!isconvex`](@ref), with tolerance `convex_tol`
+* otherwise, decrease by `loosen`
+"""
+function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_devs, penultimate_devs, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.99, grace_period = 50, tighten_wait = 250, loosen_wait = 100, scale = 0.8, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
+	if isdiverging(history) || isovershooting(last_devs, penultimate_devs; share = overshooting_share)
+		dampen = max(dampen + tighten, max_dampen)
+		last_tightened = zero(last_tightened)
+		last_loosened += one(last_loosened)
+	elseif (length(history) ≤ 50) || (last_tightened ≤ tighten_wait) || (last_loosened ≤ loosen_wait) || (last(history) ≥ scale*reference_diff) || !isconvex(history; tail, tol = convex_tol)
+		last_loosened += one(last_loosened)
+		last_tightened += one(last_tightened)
+	else
+		dampen = min(dampen + loosen, min_dampen)
+		last_loosened = zero(last_loosened)
+		last_tightened += one(last_tightened)
+		reference_diff = last(history)
+	end
+
+	(dampen, last_loosened, last_tightened, reference_diff)
+end
+"""
+	isdiverging(history)
+
+Checks if iteration is on a bad path, but seeing if two of the past 3 iterations have worsened the difference. Useful for dynamically updating the dampening factor.[^1]
+
+See also [`dynamic_dampen`](@ref).
+
+	[^1]: If updating is too aggressive, usually one of two things happens. Either the difference blows up (if updating is _too_ aggressive) or the difference oscillates between improving and worsening (if updating is a little too aggressive).
+"""
+function isdiverging(history)
+	count(0:2) do i
+		(history[end-i] - history[end-i-1]) ≥ zero(history[end-i])
+	end
+end
+"""
+	isovershooting(last_dev, penultimate_dev; share = 0.5)
+
+Check if the convergence is overshooting each guess, as measured by a `share` of the deviations flipping signs between the last two iterations. Useful for dynamically updating the dampening factor.[^1]
+
+See also [`dynamic_dampen`](@ref).
+
+	[^1]: If dampening isn't strong enough, the devations alternate between positive and negative. Convergence wastes times bouncing back and forth, usually slowing down. Increasing the dampening can drastically speed up convergence by preventing this oscillation.
+"""
+function isovershooting(last_dev, penultimate_dev; share = 0.5)
+	overshot = count(zip(last_dev, penultimate_dev)) do (last, penultimate)
+		signbit(last) ⊻ signbit(penultimate)
+	end
+	overshot ≥ share*length(last_dev)
+end
+"""
+		isconvex(history; tail = 25, tol = 0.005)
+
+Check if the last `tail` entries in `history` is convex. Useful for dynamically updating the dampening factory.
+
+See also [`dynamic_dampen`](@ref).
+"""
+function isconvex(history; tail = 25, tol = 0.005)
+	excerpt = @view history[end-tail+1:end]
+	all(1:(tail-1)) do i
+		(ln(excerpt[i]) - ln(excerpt[i+1])) ≥ tol
+	end
+end
+
+"""
 	dampen(history; kwargs...)
 
 Given an iteration `history`, return a dampening factor. At the moment, just uses the last value of `history`.
@@ -127,15 +212,4 @@ function dampen(history; slow = 0.95, med = 0.75, fast = 0.5)
 	(isnothing(history) || isempty(history) || last(history) > 10) && return slow
 	last(history) > 1 && return med
 	return fast
-end
-
-"""
-	v_diff(v1, v2)
-
-Calculate the distance between two vectors as the sum of element-wise absolute difference.
-"""
-function v_diff(v1, v2)
-	sum(zip(v1, v2)) do (x1, x2)
-		abs(x1 - x2)
-	end
 end
