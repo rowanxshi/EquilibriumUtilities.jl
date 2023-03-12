@@ -126,20 +126,20 @@ end
 
 # DYNAMIC DAMPENING
 """
-	dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_devs, penultimate_devs, history; kw...)
+	dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; kw...)
 
 Update the dampening factor based on convergence path. Strategy:
 * increase by `tighten` if `history` [`isdiverging`](@ref) or [`isovershooting`](@ref)
 * make no change if any of:
-	* within the first `grace_period` iterations
-	* it has been under `tighten_wait` iterations since the last tightening
-	* it has been under `loosen_wait` iterations since the last loosening
-	* the current difference is above `scale*reference_diff`
-	* the `tail` of `history` [`!isconvex`](@ref), with tolerance `convex_tol`
+    - within the first `grace_period` iterations
+    - it has been under `tighten_wait` iterations since the last tightening
+    - it has been under `loosen_wait` iterations since the last loosening
+    - the current difference is above `scale*reference_diff`
+    - the `tail` of `history` [`!isconvex`](@ref), with tolerance `convex_tol`
 * otherwise, decrease by `loosen`
 """
-function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_devs, penultimate_devs, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.99, grace_period = 50, tighten_wait = 250, loosen_wait = 100, scale = 0.8, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
-	if isdiverging(history) || isovershooting(last_devs, penultimate_devs; share = overshooting_share)
+function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.99, grace_period = 50, tighten_wait = 250, loosen_wait = 100, scale = 0.8, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
+	if isdiverging(history) || isovershooting(last_deviations, penultimate_deviations; share = overshooting_share)
 		dampen = max(dampen + tighten, max_dampen)
 		last_tightened = zero(last_tightened)
 		last_loosened += one(last_loosened)
@@ -170,19 +170,19 @@ function isdiverging(history)
 	end
 end
 """
-	isovershooting(last_dev, penultimate_dev; share = 0.5)
+	isovershooting(last_deviations, penultimate_deviations; share = 0.5)
 
 Check if the convergence is overshooting each guess, as measured by a `share` of the deviations flipping signs between the last two iterations. Useful for dynamically updating the dampening factor.[^1]
 
 See also [`dynamic_dampen`](@ref).
 
-	[^1]: If dampening isn't strong enough, the devations alternate between positive and negative. Convergence wastes times bouncing back and forth, usually slowing down. Increasing the dampening can drastically speed up convergence by preventing this oscillation.
+	[^1]: If dampening isn't strong enough, the devationsiations alternate between positive and negative. Convergence wastes times bouncing back and forth, usually slowing down. Increasing the dampening can drastically speed up convergence by preventing this oscillation.
 """
-function isovershooting(last_dev, penultimate_dev; share = 0.5)
-	overshot = count(zip(last_dev, penultimate_dev)) do (last, penultimate)
+function isovershooting(last_deviations, penultimate_deviations; share = 0.5)
+	overshot = count(zip(last_deviations, penultimate_deviations)) do (last, penultimate)
 		signbit(last) ⊻ signbit(penultimate)
 	end
-	overshot ≥ share*length(last_dev)
+	overshot ≥ share*length(last_deviations)
 end
 """
 		isconvex(history; tail = 25, tol = 0.005)
