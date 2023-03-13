@@ -202,7 +202,7 @@ function isconvex(history; tail = 25, tol = 0.005)
 	(length(history) < tail) && return false
 	excerpt = @view history[end-tail+1:end]
 	@inbounds all(1:(tail-1)) do i
-		(ln(excerpt[i]) - ln(excerpt[i+1])) ≥ tol
+		(log(excerpt[i]) - log(excerpt[i+1])) ≥ tol
 	end
 end
 
