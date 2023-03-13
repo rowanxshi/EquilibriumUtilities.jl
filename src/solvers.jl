@@ -109,7 +109,7 @@ Update `main` according to `secondary`, with a `dampen`ing factor. Useful for it
 If `dampen` is set at `1.0`, [`dynamic_dampen`](@ref)ing is used.
 """
 function update!(main, secondary; cs = cs, dampen = 1.0, v_diff = v_diff, dampen_kw...)
-	_dampen = isone(dampen) ? dynamic_dampen!(cs; dampen_kw...).dampen : dampen
+	_dampen = isone(dampen) ? dynamic_dampen!(cs; dampen_kw...)[:dampen] : dampen
 	for (i_main, i_sec) in zip(eachindex(main), eachindex(secondary))
 		main[i_main], secondary[i_sec] = secondary[i_sec], main[i_main]
 		main[i_main] += _dampen*(secondary[i_sec] - main[i_main])
