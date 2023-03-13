@@ -144,14 +144,14 @@ Update the dampening factor based on convergence path. Strategy:
 """
 function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.99, grace_period = 50, tighten_wait = 250, loosen_wait = 100, scale = 0.8, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
 	if isdiverging(history) || isovershooting(last_deviations, penultimate_deviations; share = overshooting_share)
-		dampen = max(dampen + tighten, max_dampen)
+		dampen = min(dampen + tighten, max_dampen)
 		last_tightened = zero(last_tightened)
 		last_loosened += one(last_loosened)
 	elseif (length(history) ≤ 50) || (last_tightened ≤ tighten_wait) || (last_loosened ≤ loosen_wait) || (last(history) ≥ scale*reference_diff) || !isconvex(history; tail, tol = convex_tol)
 		last_loosened += one(last_loosened)
 		last_tightened += one(last_tightened)
 	else
-		dampen = min(dampen + loosen, min_dampen)
+		dampen = max(dampen + loosen, min_dampen)
 		last_loosened = zero(last_loosened)
 		last_tightened += one(last_tightened)
 		reference_diff = last(history)
