@@ -102,13 +102,13 @@ function converge(update::Function, step_diff::Function, init::Function; history
 end
 
 """
-	update!(main, secondary; dampen = 1.0, v_diff = v_diff)
+	update!(main, secondary; dampen = 1.0, v_diff = v_diff, cs = cs, dampen_kw...)
 
 Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration). Returns the `v_diff` of the update step (useful for breaking iteration if the step size is too small).
 
 If `dampen` is set at `1.0`, [`dynamic_dampen`](@ref)ing is used.
 """
-function update!(main, secondary; dampen = 1.0, v_diff = v_diff, history = cs.history, dampen_kw...)
+function update!(main, secondary; cs = cs, dampen = 1.0, v_diff = v_diff, dampen_kw...)
 	_dampen = isone(dampen) ? dynamic_dampen!(cs; dampen_kw...).dampen : dampen
 	for (i_main, i_sec) in zip(eachindex(main), eachindex(secondary))
 		main[i_main], secondary[i_sec] = secondary[i_sec], main[i_main]
@@ -166,7 +166,7 @@ Checks if iteration is on a bad path, but seeing if two of the past 3 iterations
 
 See also [`dynamic_dampen`](@ref).
 
-	[^1]: If updating is too aggressive, usually one of two things happens. Either the difference blows up (if updating is _too_ aggressive) or the difference oscillates between improving and worsening (if updating is a little too aggressive).
+[^1]: If updating is too aggressive, usually one of two things happens. Either the difference blows up (if updating is _too_ aggressive) or the difference oscillates between improving and worsening (if updating is a little too aggressive).
 """
 function isdiverging(history)
 	(length(history) ≤ 3) && return false
@@ -182,7 +182,7 @@ Check if the convergence is overshooting each guess, as measured by a `share` of
 
 See also [`dynamic_dampen`](@ref).
 
-	[^1]: If dampening isn't strong enough, the devationsiations alternate between positive and negative. Convergence wastes times bouncing back and forth, usually slowing down. Increasing the dampening can drastically speed up convergence by preventing this oscillation.
+[^1]: If dampening isn't strong enough, the devationsiations alternate between positive and negative. Convergence wastes times bouncing back and forth, usually slowing down. Increasing the dampening can drastically speed up convergence by preventing this oscillation.
 """
 function isovershooting(last_deviations, penultimate_deviations; share = 0.5)
 	(isempty(last_deviations) || isempty(penultimate_deviations)) && return false
@@ -192,7 +192,7 @@ function isovershooting(last_deviations, penultimate_deviations; share = 0.5)
 	overshot ≥ share*length(last_deviations)
 end
 """
-		isconvex(history; tail = 25, tol = 0.005)
+	isconvex(history; tail = 25, tol = 0.005)
 
 Check if the last `tail` entries in `history` is convex. Useful for dynamically updating the dampening factory.
 
