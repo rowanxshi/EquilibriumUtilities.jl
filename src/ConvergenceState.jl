@@ -10,7 +10,6 @@ function dynamic_dampen!(dampen_state, last_deviations, penultimate_deviations, 
 end
 dynamic_dampen(last_deviations, penultimate_deviations, history; kw...) = dynamic_dampen!(_dampen_state, last_deviations, penultimate_deviations, history; kw...)
 function reset_dampen_state!(dampen_state = _dampen_state)
-	dampen_state[:dampen] = 0.85
 	dampen_state[:last_loosened] = Inf
 	dampen_state[:last_tightened] = Inf
 	dampen_state[:reference_diff] = Inf
