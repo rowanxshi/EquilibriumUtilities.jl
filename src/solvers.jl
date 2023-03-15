@@ -129,7 +129,7 @@ end
 Calculate the distance between two vectors as the sum of element-wise absolute difference.
 """
 function v_diff(v1, v2)
-	sum(zip(v1, v2)) do (x1, x2)
+	maximum(zip(v1, v2)) do (x1, x2)
 		abs(x1 - x2)
 	end
 end
