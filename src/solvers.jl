@@ -28,7 +28,7 @@ function newton(f_f′::Function, x; verbose::Bool = false, step_tol = 1e-8, f_t
 		diff = -f/f′
 		diff = isinf(diff) ? one(diff) : diff
 		abs(diff) < step_tol && break
-		@debug("x: $x, f: $f, diff: $diff")
+		@debug Printf.@sprintf "x: %.3e, f: %.3e, diff: %.3e" x f diff
 		verbose && println("x: $x, f: $f, diff: $diff")
 		x += if (x+diff ≥ r)
 			isequal(x, r) && break # give up if even at upper bound, newton wants to go higher
@@ -94,7 +94,9 @@ function converge(update::Function, step_diff::Function, init::Function; history
 		if (up < up_tol) && small_up
 			break # break if the update is too small twice in a row
 		end
-		verbose && println("iter $iter: diff $diff, up $up")
+		if verbose
+			Printf.@printf "iter %6f: diff %14e, step %14e\in" iter diff up
+		end
 		(up < up_tol) && (small_up = true)
 	end
 	!conv && @warn msg
@@ -142,7 +144,7 @@ Update the dampening factor based on convergence path. Strategy:
     - the `tail` of `history` [`!isconvex`](@ref), with tolerance `convex_tol`
 * otherwise, decrease by `loosen`
 """
-function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.99, grace_period = 50, tighten_wait = 250, loosen_wait = 100, scale = 0.8, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
+function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.99, grace_period = 50, tighten_wait = 250, loosen_wait = 50, scale = 0.8, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
 	if (isdiverging(history) || isovershooting(last_deviations, penultimate_deviations; share = overshooting_share)) && (dampen + tighten < max_dampen)
 		dampen += tighten
 		last_tightened = zero(last_tightened)

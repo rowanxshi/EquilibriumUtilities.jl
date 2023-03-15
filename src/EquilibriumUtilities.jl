@@ -4,7 +4,7 @@ A package of basic utility functions used commonly when computing economic equil
 See [`converge`](@ref), [`normalise!`](@ref), [`zero_safe`](@ref), [`newton`](@ref).
 """
 module EquilibriumUtilities
-
+import Printf
 
 """
 	normalise!(v, factor = zero_safe(first(v)))
