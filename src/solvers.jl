@@ -147,7 +147,7 @@ function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, l
 		dampen += tighten
 		last_tightened = zero(last_tightened)
 		last_loosened += one(last_loosened)
-		@debug "tightened: $(isdiverging(history) ? "diverging" : "overshooting")"
+		@debug "tightened from $(dampen - tighten) to $dampen: $(isdiverging(history) ? "diverging" : "overshooting")"
 	elseif (length(history) ≤ 50) || (last_tightened ≤ tighten_wait) || (last_loosened ≤ loosen_wait) || (last(history) ≥ scale*reference_diff) || (dampen + loosen < min_dampen)
 	# || !isconvex(history; tail, tol = convex_tol)
 		last_loosened += one(last_loosened)
@@ -157,7 +157,7 @@ function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, l
 		last_loosened = zero(last_loosened)
 		last_tightened += one(last_tightened)
 		reference_diff = last(history)
-		@debug "loosened: reference diff $(last(history))"
+		@debug "loosened from $(dampen - loosen) to $dampen: reference diff $(last(history))"
 	end
 
 	(dampen, last_loosened, last_tightened, reference_diff)
