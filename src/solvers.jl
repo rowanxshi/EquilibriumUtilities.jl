@@ -187,6 +187,7 @@ See also [`dynamic_dampen`](@ref).
 """
 function isovershooting(last_deviations, penultimate_deviations; share = 0.5)
 	(isempty(last_deviations) || isempty(penultimate_deviations)) && return false
+	(all(isinf, penultimate_deviations) || all(isinf, last_deviations)) && return false
 	overshot = count(zip(last_deviations, penultimate_deviations)) do (last, penultimate)
 		signbit(last) ⊻ signbit(penultimate)
 	end
