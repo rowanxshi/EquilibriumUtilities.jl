@@ -86,8 +86,8 @@ function converge(update::Function, step_diff::Function, init::Function; history
 	conv = false
 	
 	if verbose
-    Printf.@printf io "iter     diff             step \n"
-    Printf.@printf io "------   --------------   --------------\n"
+    Printf.@printf "iter     diff             step \n"
+    Printf.@printf "------   --------------   --------------\n"
 	end
 	for iter in 1:max_iter
 		diff = step_diff()
