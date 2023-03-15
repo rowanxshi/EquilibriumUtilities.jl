@@ -95,7 +95,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 			break # break if the update is too small twice in a row
 		end
 		if verbose
-			Printf.@printf "iter %6f: diff %14e, step %14e\in" iter diff up
+			Printf.@printf "iter %6f: diff %14e, step %14e\n" iter diff up
 		end
 		(up < up_tol) && (small_up = true)
 	end
