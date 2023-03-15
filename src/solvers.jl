@@ -145,6 +145,7 @@ Update the dampening factor based on convergence path. Strategy:
 function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.99, grace_period = 50, tighten_wait = 250, loosen_wait = 100, scale = 0.8, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
 	if isdiverging(history) || isovershooting(last_deviations, penultimate_deviations; share = overshooting_share)
 		dampen = min(dampen + tighten, max_dampen)
+		@info "tightened $(isdiverging(history)) $(isovershooting(last_deviations, penultimate_deviations))"
 		last_tightened = zero(last_tightened)
 		last_loosened += one(last_loosened)
 	elseif (length(history) ≤ 50) || (last_tightened ≤ tighten_wait) || (last_loosened ≤ loosen_wait) || (last(history) ≥ scale*reference_diff) || !isconvex(history; tail, tol = convex_tol)
