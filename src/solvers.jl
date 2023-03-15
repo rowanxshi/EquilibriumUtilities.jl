@@ -88,13 +88,13 @@ function converge(update::Function, step_diff::Function, init::Function; history
 	for iter in 1:max_iter
 		diff = step_diff()
 		push!(history, diff)
-		verbose && @info diff
 		conv = (diff < diff_tol)
 		conv && break
 		up = update()
 		if (up < up_tol) && small_up
 			break # break if the update is too small twice in a row
 		end
+		verbose && println("iter $iter: diff $diff, up $up")
 		(up < up_tol) && (small_up = true)
 	end
 	!conv && @warn msg
@@ -147,7 +147,8 @@ function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, l
 		dampen += tighten
 		last_tightened = zero(last_tightened)
 		last_loosened += one(last_loosened)
-		@debug "tightened from $(dampen - tighten) to $dampen: $(isdiverging(history) ? "diverging" : "overshooting")"
+		reference_diff = minimum(@view(history[end-2:end]))
+		@debug "tightened from $(dampen - tighten) to $dampen: $(isdiverging(history) ? "diverging" : "overshooting"); reference diff $(last(history))"
 	elseif (length(history) ≤ 50) || (last_tightened ≤ tighten_wait) || (last_loosened ≤ loosen_wait) || (last(history) ≥ scale*reference_diff) || (dampen + loosen < min_dampen)
 	# || !isconvex(history; tail, tol = convex_tol)
 		last_loosened += one(last_loosened)
@@ -156,8 +157,7 @@ function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, l
 		dampen += loosen
 		last_loosened = zero(last_loosened)
 		last_tightened += one(last_tightened)
-		reference_diff = last(history)
-		@debug "loosened from $(dampen - loosen) to $dampen: reference diff $(last(history))"
+		@debug "loosened from $(dampen - loosen) to $dampen"
 	end
 
 	(dampen, last_loosened, last_tightened, reference_diff)
