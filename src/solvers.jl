@@ -85,6 +85,10 @@ function converge(update::Function, step_diff::Function, init::Function; history
 	small_up = false
 	conv = false
 	
+	if verbose
+    @printf io "iter     diff             step \n"
+    @printf io "------   --------------   --------------\n"
+	end
 	for iter in 1:max_iter
 		diff = step_diff()
 		push!(history, diff)
@@ -95,7 +99,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 			break # break if the update is too small twice in a row
 		end
 		if verbose
-			Printf.@printf "iter %6d: diff %14e, step %14e\n" iter diff up
+			Printf.@printf "%6d   %14e   %14e\n" iter diff up
 		end
 		(up < up_tol) && (small_up = true)
 	end
