@@ -22,11 +22,17 @@ end
 If `x` is zero, return `one(x)`. Otherwise, return `x`. Useful for safely dividing by `x`.
 """
 zero_safe(x) = iszero(x) ? one(x) : x
+function diag_view(mat::AbstractMatrix)
+	!issquare(mat) && error("matrix is not square: $mat")
+	S = first(size(mat))
+
+	@view mat[1:(S+1):end]
+end
 
 include("WrappedDict.jl")
 include("ConvergenceState.jl")
 include("solvers.jl")
 
-export newton, converge, v_diff, normalise!, zero_safe, dampen, update!, WrappedDict
+export newton, converge, v_diff, normalise!, zero_safe, diag_view, dampen, update!, WrappedDict
 
 end
