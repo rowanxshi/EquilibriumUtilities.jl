@@ -28,11 +28,15 @@ function diag_view(mat::AbstractMatrix)
 
 	@view mat[1:(S+1):end]
 end
+function issquare(mat::AbstractMatrix)
+	dims = size(mat)
+	isequal(dims...) 
+end
 
 include("WrappedDict.jl")
 include("ConvergenceState.jl")
 include("solvers.jl")
 
-export newton, converge, v_diff, normalise!, zero_safe, diag_view, dampen, update!, WrappedDict
+export newton, converge, v_diff, normalise!, zero_safe, issquare, diag_view, dampen, update!, WrappedDict
 
 end
