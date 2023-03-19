@@ -1,4 +1,4 @@
-q"""
+"""
 Simple Newton method implementation.
 
 ## Keywords
