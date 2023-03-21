@@ -64,6 +64,13 @@ function reset!(cs::ConvergenceState)
 end
 const cs = ConvergenceState(_dampen_state, Float64[], Float64[], _history)
 
+function initiate_deviations!(cs::EquilibriumUtilities.ConvergenceState, C::Int)
+	resize!(cs.penultimate_deviations, C)
+	fill!(cs.penultimate_deviations, Inf)
+	resize!(cs.last_deviations, C)
+	fill!(cs.last_deviations, Inf)
+end
+
 dynamic_dampen!(cs::ConvergenceState; kw...) = dynamic_dampen!(cs.dampen_state, cs.last_deviations, cs.penultimate_deviations, cs.history; kw...)
 isdiverging(cs::ConvergenceState) = EquilibriumUtilities.isdiverging(cs.history)
 isovershooting(cs::ConvergenceState; share = 0.5) = EquilibriumUtilities.isovershooting(cs.last_deviations, cs.penultimate_deviations; share)
