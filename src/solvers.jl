@@ -120,7 +120,7 @@ function update!(main, secondary; cs = cs, dampen = 1.0, v_diff = v_diff, dampen
 		main[i_main], secondary[i_sec] = secondary[i_sec], main[i_main]
 		main[i_main] += _dampen*(secondary[i_sec] - main[i_main])
 	end
-	v_diff(main, secondary)
+	v_diff(secondary, main)
 end
 
 """
