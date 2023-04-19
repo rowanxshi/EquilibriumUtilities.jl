@@ -52,11 +52,14 @@ struct ConvergenceState{D <: Dict{Symbol}, V1 <: AbstractVector, V2 <: AbstractV
 		new{D, V1, V2}(dampen_state, last_deviations, penultimate_deviations, history)
 	end
 end
-function ConvergenceState(dampen_state::D, last_devations::V1, penultimate_deviations::V1, history::V2 = _history) where {D <: Dict, V1 <: AbstractVector, V2 <: AbstractVector}
+function ConvergenceState(dampen_state::D, last_devations::V1, penultimate_deviations::V1, history::V2 = copy(_history)) where {D <: Dict, V1 <: AbstractVector, V2 <: AbstractVector}
 	ConvergenceState{D, V1, V2}(dampen_state, last_devations, penultimate_deviations, history)
 end
-function ConvergenceState(last_deviations::V1, penultimate_deviations::V1, history::V2 = _history) where {V1 <: AbstractVector, V2 <: AbstractVector}
-	ConvergenceState(_dampen_state, last_deviations, penultimate_deviations, history)
+function ConvergenceState(last_deviations::V1, penultimate_deviations::V1, history::V2 = copy(_history)) where {V1 <: AbstractVector, V2 <: AbstractVector}
+	ConvergenceState(copy(_dampen_state), last_deviations, penultimate_deviations, history)
+end
+function ConvergenceState(N::Integer = 0, history::AbstractVector = copy(_history))
+	ConvergenceState(copy(_dampen_state), fill(Inf, N), fill(Inf, N), history)
 end
 function reset!(cs::ConvergenceState)
 	reset_dampen_state!(cs.dampen_state)
