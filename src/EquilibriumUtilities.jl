@@ -22,6 +22,15 @@ end
 If `x` is zero, return `one(x)`. Otherwise, return `x`. Useful for safely dividing by `x`.
 """
 zero_safe(x) = iszero(x) ? one(x) : x
+"""
+	chunk(V::AbstractVector, N::Integer)
+
+Chunk a vector `V` into [`view`](@ref)s each of length `N`. Returns a [`Tuple`](@ref) of [`view`](@ref)s.
+"""
+function chunk(V::AbstractVector, N::Integer)
+	chunked_indices = Iterators.partition(eachindex(V), N)
+	(view(V, chunk) for chunk in chunked_indices)
+end
 function diag_view(mat::AbstractMatrix)
 	!issquare(mat) && error("matrix is not square: $mat")
 	S = first(size(mat))
@@ -37,6 +46,6 @@ include("WrappedDict.jl")
 include("ConvergenceState.jl")
 include("solvers.jl")
 
-export newton, converge, v_diff, normalise!, zero_safe, issquare, diag_view, dampen, update!, WrappedDict
+export newton, converge, v_diff, normalise!, zero_safe, chunk, issquare, diag_view, dampen, update!, WrappedDict
 
 end

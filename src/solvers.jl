@@ -91,7 +91,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 	end
 	for iter in 1:max_iter
 		diff = step_diff()
-		push!(history, diff)
+		!isnothing(history) && push!(history, diff)
 		conv = (diff < diff_tol)
 		conv && break
 		up = update()
