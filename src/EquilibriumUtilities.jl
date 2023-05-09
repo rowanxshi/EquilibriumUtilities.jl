@@ -5,6 +5,7 @@ See [`converge`](@ref), [`normalise!`](@ref), [`zero_safe`](@ref), [`newton`](@r
 """
 module EquilibriumUtilities
 import Printf
+import Logging
 
 """
 	normalise!(v, factor = zero_safe(first(v)))
@@ -41,11 +42,17 @@ function issquare(mat::AbstractMatrix)
 	dims = size(mat)
 	isequal(dims...) 
 end
+function quietly(f::Function)
+	out = Logging.with_logger(Logging.NullLogger()) do
+		f()
+	end
+	out
+end
 
 include("WrappedDict.jl")
 include("ConvergenceState.jl")
 include("solvers.jl")
 
-export newton, converge, v_diff, normalise!, zero_safe, chunk, issquare, diag_view, dampen, update!, WrappedDict
+export newton, converge, v_diff, normalise!, zero_safe, chunk, issquare, quietly, diag_view, dampen, update!, WrappedDict
 
 end
