@@ -28,7 +28,7 @@ function newton(f_f′::Function, x; verbose::Bool = false, step_tol = 1e-8, f_t
 		diff = -f/f′
 		diff = isinf(diff) ? one(diff) : diff
 		abs(diff) < step_tol && break
-		@debug Printf.@sprintf "x: %.3e, f: %.3e, diff: %.3e" x f diff
+		# @debug Printf.@sprintf "x: %.3e, f: %.3e, diff: %.3e" x f diff
 		verbose && println("x: $x, f: $f, diff: $diff")
 		x += if (x+diff ≥ r)
 			isequal(x, r) && break # give up if even at upper bound, newton wants to go higher
@@ -86,8 +86,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 	conv = false
 	
 	if verbose && (max_iter > 0)
-    Printf.@printf "iter     diff             step \n"
-    Printf.@printf "------   --------------   --------------\n"
+		meter = ProgressMeter.ProgressThresh(diff_tol; color=:blue, output=stdout, showspeed=true)
 	end
 	for iter in 1:max_iter
 		diff = step_diff()
@@ -98,9 +97,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 		if (up < up_tol) && small_up
 			break # break if the update is too small twice in a row
 		end
-		if verbose
-			Printf.@printf "%6d   %14e   %14e\n" iter diff up
-		end
+		verbose && ProgressMeter.update!(meter, diff)
 		(up < up_tol) && (small_up = true)
 	end
 	!conv && @warn msg
