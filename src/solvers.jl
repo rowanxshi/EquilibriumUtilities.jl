@@ -97,7 +97,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 		if (up < up_tol) && small_up
 			break # break if the update is too small twice in a row
 		end
-		verbose && ProgressMeter.update!(meter, diff)
+		verbose && ProgressMeter.update!(meter, diff; showvalues = [(:iter, iter)])
 		(up < up_tol) && (small_up = true)
 	end
 	!conv && @warn msg
