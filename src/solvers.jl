@@ -97,7 +97,7 @@ function converge(update::Function, step_diff::Function, init::Function; history
 		if (up < up_tol) && small_up
 			break # break if the update is too small twice in a row
 		end
-		verbose && ProgressMeter.update!(meter, diff; showvalues = [(:iter, iter)])
+		verbose && ProgressMeter.update!(meter, diff; showvalues = [(:iter, iter), (:up, up)])
 		(up < up_tol) && (small_up = true)
 	end
 	!conv && @warn msg
@@ -118,6 +118,12 @@ function update!(main, secondary; cs = cs, dampen = 1.0, v_diff = v_diff, dampen
 		main[i_main] += _dampen*(secondary[i_sec] - main[i_main])
 	end
 	v_diff(secondary, main)
+end
+function update(main, secondary; cs = cs, dampen = 1.0, dampen_kw...)
+	_dampen = isone(dampen) ? dynamic_dampen!(cs; dampen_kw...)[:dampen] : dampen
+	main, secondary = secondary, main
+	main += _dampen*(secondary - main)
+	main, secondary
 end
 
 """
