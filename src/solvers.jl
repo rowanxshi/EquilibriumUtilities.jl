@@ -233,3 +233,30 @@ function dampen(history; slow = 0.95, med = 0.75, fast = 0.5)
 	last(history) > 1 && return med
 	return fast
 end
+
+function bisection(f::Function, interval; converge_kw...)
+	init!() = let interval = interval
+		!(length(interval) == 2) && error("provided interval doesn't have two points")
+		sort!(interval)
+	end
+	diff!() = let f = f, interval = interval
+		f(sum(interval)/2)
+	end
+	update!() = let f = f, interval = interval
+		middle = f(sum(interval)/2)
+		left = f(first(interval))
+		right = f(last(interval))
+		new = sum(interval)/2
+		if sign(middle) == sign(left)
+			old = interval[first(eachindex(interval))]
+			interval[first(eachindex(interval))] = new
+			abs(old - new)
+		else
+			old = interval[last(eachindex(interval))]
+			interval[last(eachindex(interval))] = new
+			abs(old - new)
+		end
+	end
+
+	converge(update!, diff!, init!; converge_kw...)
+end

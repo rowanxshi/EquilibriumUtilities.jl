@@ -39,6 +39,7 @@ Base.get!(s::WrappedDict, k::Symbol, default) = get!(getfield(s, :internal_dict)
 Base.getproperty(s::WrappedDict, k::Symbol) = getindex(s, k)
 Base.setproperty!(s::WrappedDict, k::Symbol, value) = setindex!(s, value, k)
 Base.delete!(s::WrappedDict, k::Symbol) = delete!(getfield(s, :internal_dict), k)
+Base.propertynames(s::WrappedDict) = keys(getfield(s, :internal_dict))
 
 """
 	pretty(s::WrappedDict, var_names = keys(s); kw...)
