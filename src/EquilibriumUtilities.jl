@@ -6,6 +6,7 @@ See [`converge`](@ref), [`normalise!`](@ref), [`zero_safe`](@ref), [`newton`](@r
 module EquilibriumUtilities
 import ProgressMeter
 import Logging
+import Printf
 
 """
 	normalise!(v, factor = zero_safe(first(v)))
@@ -48,6 +49,15 @@ function quietly(f::Function)
 	end
 	out
 end
+abstract type ListPrint end
+function Base.show(io::IO, m::MIME"text/plain", s::ListPrint)
+	for field in fieldnames(typeof(s))
+		Printf.@printf "\n%6s: " field
+		show(getfield(s, field))
+	end
+end
+
+
 
 include("WrappedDict.jl")
 include("ConvergenceState.jl")

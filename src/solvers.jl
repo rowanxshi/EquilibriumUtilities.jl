@@ -23,6 +23,7 @@ See also [`newton`](@ref).
 	l::T3 = -Inf
 	r::T4 = Inf
 end
+const default_newton_parameters = NewtonParameters()
 
 """
 Simple Newton method implementation.
@@ -108,6 +109,7 @@ See also [`converge`](@ref).
 	msg::T5 = "No convergence"
 	verbose::Bool = false
 end
+const default_convergence_parameters = ConvergeParameters()
 
 """
 	converge(update::Function, step_diff::Function, init::Function; kwargs...) -> (converged, stalled_update)
