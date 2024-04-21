@@ -86,7 +86,7 @@ function newton(f::Function, f′::Function, x, p::NewtonParameters)
 end
 
 """
-	ConvergeParams
+	ConvergeParameters
 
 Contains optional parameters for the [`converge`](@ref) solver.
 
@@ -100,7 +100,7 @@ See also [`converge`](@ref).
 * `history = empty!(cs.history)`: Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
 * `verbose::Bool = false`: Print the `diff` every iteration?
 """
-@kwdef struct ConvergeParams{T1, T2 <: Real, T3 <: Real, T4 <: Integer, T5}
+@kwdef struct ConvergeParameters{T1, T2 <: Real, T3 <: Real, T4 <: Integer, T5}
 	history::T1 = empty!(cs.history)
 	diff_tol::T2 = 1e-6
 	up_tol::T3 = zero(diff_tol)
@@ -118,13 +118,13 @@ The function returns a pair of booleans, the first of which signals whether conv
 
 For an example, see this package's tests which uses this function to solve the finite-firm CES game.
 
-See also [`ConvergeParams`](@ref), [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
+See also [`ConvergeParameters`](@ref), [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
 
 """
 function converge(update::Function, step_diff::Function, init::Function; kw...)
-	converge(update, step_diff, init, ConvergeParams(; kw...))
+	converge(update, step_diff, init, ConvergeParameters(; kw...))
 end
-function converge(update::Function, step_diff::Function, init::Function, p::ConvergeParams)
+function converge(update::Function, step_diff::Function, init::Function, p::ConvergeParameters)
 	(; history, diff_tol, up_tol, max_iter, msg, verbose) = p
 	init()
 	reset!(cs)
