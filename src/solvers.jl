@@ -1,14 +1,33 @@
 """
+	NewtonParameters
+
+Contains optional parameters for the [`newton`](@ref) solver.
+
+See also [`newton`](@ref).
+
+## Fields
+* `verbose::Bool = false`: Print some info every iteration?
+* `step_tol::Float64 = 1e-8`: If the (absolute value of) step size is smaller than this tolerance, stop.
+* `f_tol::Float64 = step_tol`: If the (absolute value of) function value is smaller than this tolerance, stop.
+* `max_iter::Integer = 750`: Maximum number of iterations before giving up.
+* `msg = "No Newton convergence"`: Warning message to display if there isn't convergence within the maximum number of iterations.
+* `l::Real = -Inf`: Left bound.
+* `r::Real = Inf`: Right bound.
+"""
+@kwdef struct NewtonParameters{T1 <: Integer, T2, T3 <: Real, T4 <: Real}
+	verbose::Bool = false
+	step_tol::Float64 = 1e-8
+	f_tol::Float64 = step_tol
+	max_iter::T1 = 750
+	msg::T2 = "No Newton convergence"
+	l::T3 = -Inf
+	r::T4 = Inf
+end
+
+"""
 Simple Newton method implementation.
 
-## Keywords
-* `step_tol = 1e-8` : If the (absolute value of) step size is smaller than this tolerance, stop.
-* `f_tol = step_tol` : If the (absolute value of) function value is smaller than this tolerance, stop.
-* `max_iter = 750` : Maximum number of iterations before giving up.
-* `l = -Inf` : Left bound.
-* `r = Inf` : Right bound.
-* `msg = "No Newton convergence"` : Warning message to display if there isn't convergence within the maximum number of iterations.
-* `verbose::Bool = false` : Print some info every iteration?
+See also [`NewtonParameters`](@ref) for more keyword argument options.
 """
 function newton end
 
@@ -17,7 +36,11 @@ function newton end
 	
 `f_f′` should be a function which returns the tuple `(f, f′)` of function value and derivative. `x` is the initial guess.
 """
-function newton(f_f′::Function, x; verbose::Bool = false, step_tol = 1e-8, f_tol = step_tol, max_iter = 750, msg = "No Newton convergence", l = -Inf, r = Inf)
+function newton(f_f′::Function, x; kw...)
+	newton(f_f′, x, NewtonParameters(; kw...))
+end
+function newton(f_f′::Function, x, p::NewtonParameters)
+	(; step_tol, f_tol, max_iter, verbose, r, l, msg) = p
 	diff = 2step_tol
 	f = 2f_tol
 	iter = 1
@@ -52,33 +75,57 @@ end;
 	
 `f` should be a function which returns the function value and `f′` its derivative. `x` is the initial guess.
 """
-function newton(f::Function, f′::Function, x::Real; newton_params...)
+function newton(f::Function, f′::Function, x; newton_params...)
+	newton(f, f′, x, NewtonParameters(; newton_params...))
+end
+function newton(f::Function, f′::Function, x, p::NewtonParameters)
 	f_f′(x) = let f = f, f′ = f′
 		(f(x), f′(x))
 	end
-	newton(f_f′, x; newton_params...)
+	newton(f_f′, x, p)
 end
 
 """
-	converge(update::Function, step_diff::Function, init::Function; kwargs...)
+	ConvergeParams
+
+Contains optional parameters for the [`converge`](@ref) solver.
+
+See also [`converge`](@ref).
+
+## Fields
+* `diff_tol::Real = 1e-6`: If the value returned by `step_diff` is less than this tolerance, stop.
+* `up_tol::Real = zero(diff_tol)`: If the value returned by `update` is less than this tolerance, stop.
+* `max_iter::Integer = 200`: Maximum number of iterations before giving up.
+* `msg = "No convergence"`: Warning message to display if there isn't convergence within the maximum number of iterations.
+* `history = empty!(cs.history)`: Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
+* `verbose::Bool = false`: Print the `diff` every iteration?
+"""
+@kwdef struct ConvergeParams{T1, T2 <: Real, T3 <: Real, T4 <: Integer, T5}
+	history::T1 = empty!(cs.history)
+	diff_tol::T2 = 1e-6
+	up_tol::T3 = zero(diff_tol)
+	max_iter::T4 = 200
+	msg::T5 = "No convergence"
+	verbose::Bool = false
+end
+
+"""
+	converge(update::Function, step_diff::Function, init::Function; kwargs...) -> (converged, stalled_update)
 
 Iterate until convergence. In particular, the problem is initiated with `init()`. Then, repeatedly apply `step_diff()` which should do an iteration step, then return the `diff`. `converge` will compare the returned difference with `tol`; if it's smaller, then converge is reached and iteration stops. Otherwise, it will apply `update()`, which should return the size of the update.
 
-The function returns a pair of booleans, the first of which signals whether convergence was reached; the second signals whether iteration was aborted because the update was too small.
+The function returns a pair of booleans, the first of which signals whether convergence was reached; the second of which signals whether iteration was aborted because the update was too small.
 
 For an example, see this package's tests which uses this function to solve the finite-firm CES game.
 
-See also [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
+See also [`ConvergeParams`](@ref), [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
 
-## Keywords
-* `diff_tol::Real = 1e-6` : If the value returned by `step_diff` is less than this tolerance, stop.
-* `up_tol::Real = zero(diff_tol)` : If the value returned by `update` is less than this tolerance, stop.
-* `max_iter::Integer = 200` : Maximum number of iterations before giving up.
-* `msg = "No convergence"` : Warning message to display if there isn't convergence within the maximum number of iterations.
-* `history = empty!(cs.history)` : Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
-* `verbose::Bool = false` : Print the `diff` every iteration?
 """
-function converge(update::Function, step_diff::Function, init::Function; history = empty!(cs.history), diff_tol::Real = 1e-6, up_tol::Real = zero(diff_tol), max_iter::Integer = 200, msg = "No convergence", verbose::Bool = false)
+function converge(update::Function, step_diff::Function, init::Function; kw...)
+	converge(update, step_diff, init, ConvergeParams(; kw...))
+end
+function converge(update::Function, step_diff::Function, init::Function, p::ConvergeParams)
+	(; history, diff_tol, up_tol, max_iter, msg, verbose) = p
 	init()
 	reset!(cs)
 	diff = one(diff_tol) + diff_tol;
@@ -224,9 +271,9 @@ end
 Given an iteration `history`, return a dampening factor. At the moment, just uses the last value of `history`.
 
 ## Keywords
-* `slow = 0.95` : the dampening factor for slow updating (when `diff` is above 10).
-* `med = 0.75` : the dampening factor for medium updating (when `diff` is above 1).
-* `fast = 0.5` : the dampening factor for fast updating.
+* `slow = 0.95`: the dampening factor for slow updating (when `diff` is above 10).
+* `med = 0.75`: the dampening factor for medium updating (when `diff` is above 1).
+* `fast = 0.5`: the dampening factor for fast updating.
 """
 function dampen(history; slow = 0.95, med = 0.75, fast = 0.5)
 	(isnothing(history) || isempty(history) || last(history) > 10) && return slow
