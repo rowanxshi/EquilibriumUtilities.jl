@@ -188,7 +188,7 @@ end
 
 # DYNAMIC DAMPENING
 """
-	dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; kw...)
+	dynamic_dampen(d::DampenState, last_deviations, penultimate_deviations, history; kw...)
 
 Update the dampening factor based on convergence path. Strategy:
 * increase by `tighten` if `history` [`isdiverging`](@ref) or [`isovershooting`](@ref)
@@ -199,7 +199,8 @@ Update the dampening factor based on convergence path. Strategy:
     - the current difference is above `scale*reference_diff`
 * otherwise, decrease by `loosen`
 """
-function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, last_deviations, penultimate_deviations, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.999, grace_period = 50, tighten_wait = 30, loosen_wait = 40, scale = 0.925, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
+function dynamic_dampen(d::DampenState, last_deviations, penultimate_deviations, history; loosen = -0.01, tighten = 0.01, min_dampen = 0.0, max_dampen = 0.999, grace_period = 50, tighten_wait = 30, loosen_wait = 40, scale = 0.925, tail = 25, convex_tol = 0.005, overshooting_share = 0.5)
+	(; dampen, last_loosened, last_tightened, reference_diff) = d
 	if (isdiverging(history) || isovershooting(last_deviations, penultimate_deviations; share = overshooting_share)) && (dampen + tighten ≤ max_dampen)
 		dampen += tighten
 		last_tightened = zero(last_tightened)
@@ -217,7 +218,7 @@ function dynamic_dampen(dampen, last_loosened, last_tightened, reference_diff, l
 		@debug "loosened from $(dampen - loosen) to $dampen"
 	end
 
-	(dampen, last_loosened, last_tightened, reference_diff)
+	DampenState(; dampen, last_loosened, last_tightened, reference_diff)
 end
 """
 	isdiverging(history)

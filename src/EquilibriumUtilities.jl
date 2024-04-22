@@ -1,7 +1,7 @@
 """
 A package of basic utility functions used commonly when computing economic equilibria.
 
-See [`converge`](@ref), [`normalise!`](@ref), [`zero_safe`](@ref), [`newton`](@ref).
+See [`converge`](@ref), [`newton`](@ref), [`normalise!`](@ref), [`zero_safe`](@ref).
 """
 module EquilibriumUtilities
 import ProgressMeter
@@ -43,25 +43,18 @@ function issquare(mat::AbstractMatrix)
 	dims = size(mat)
 	isequal(dims...) 
 end
+
 function quietly(f::Function)
 	out = Logging.with_logger(Logging.NullLogger()) do
 		f()
 	end
 	out
 end
-abstract type ListPrint end
-function Base.show(io::IO, m::MIME"text/plain", s::ListPrint)
-	for field in fieldnames(typeof(s))
-		Printf.@printf "\n%6s: " field
-		show(getfield(s, field))
-	end
-end
-
-
 
 include("WrappedDict.jl")
 include("ConvergenceState.jl")
 include("solvers.jl")
+include("prettyprinting.jl")
 
 export newton, converge, v_diff, normalise!, zero_safe, chunk, issquare, quietly, diag_view, dampen, update!, WrappedDict
 

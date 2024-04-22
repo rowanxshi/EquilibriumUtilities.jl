@@ -1,7 +1,7 @@
 const _history = Float64[]
 const _dampen_state = Dict(:dampen => 0.85, :last_loosened => Inf, :last_tightened => Inf, :reference_diff => Inf)
 function dynamic_dampen!(dampen_state, last_deviations, penultimate_deviations, history; kw...)
-	new_state = EquilibriumUtilities.dynamic_dampen(dampen_state[:dampen], dampen_state[:last_loosened], dampen_state[:last_tightened], dampen_state[:reference_diff], last_deviations, penultimate_deviations, history; kw...)
+	new_state = dynamic_dampen(dampen_state[:dampen], dampen_state[:last_loosened], dampen_state[:last_tightened], dampen_state[:reference_diff], last_deviations, penultimate_deviations, history; kw...)
 	dampen_state[:dampen] = new_state[1]
 	dampen_state[:last_loosened] = new_state[2]
 	dampen_state[:last_tightened] = new_state[3]
