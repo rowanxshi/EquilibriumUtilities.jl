@@ -1,6 +1,6 @@
-push!(LOAD_PATH,"../src/")
-using Documenter, EquilibriumUtilities
+using Documenter, DocumenterInterLinks, EquilibriumUtilities
 
-makedocs(sitename="Equilibrium Utilities")
+links = InterLinks("Base" => "https://docs.julialang.org/en/v1/")
+makedocs(sitename="Equilibrium Utilities", plugins=[links; ])
 
 deploydocs( repo = "github.com/rowanxshi/EquilibriumUtilities.jl.git")

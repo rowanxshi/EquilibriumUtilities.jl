@@ -27,7 +27,7 @@ zero_safe(x) = iszero(x) ? one(x) : x
 """
 	chunk(V::AbstractVector, N::Integer)
 
-Chunk a vector `V` into [`view`](@ref)s each of length `N`. Returns a [`Tuple`](@ref) of [`view`](@ref)s.
+Chunk a vector `V` into [`Base.view`](@extref)s each of length `N`. Returns a [`Base.Tuple`](@extref) of [`Base.view`](@extref)s.
 """
 function chunk(V::AbstractVector, N::Integer)
 	chunked_indices = Iterators.partition(eachindex(V), N)
