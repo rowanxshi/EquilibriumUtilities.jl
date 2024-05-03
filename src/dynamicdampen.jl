@@ -38,7 +38,7 @@ Parameters for [`dynamicdampen!`](@ref).
 * `tighten::T1 = 0.01`: by how much to tighten the dampening factor
 * `min_dampen::T1 = 0.0`: the minimum value for the dampen factor
 * `max_dampen::T1 = 0.999`: the maximum value for the dampen factor
-* `scale::T1 = 0.925`: by how much to scale the reference deviation
+* `scale::T1 = 0.925`: the scale mentioned in [`dynamicdampen!`](@ref)
 * `overshooting_share::T1 = 0.5`: the share for [`isovershooting`](@ref)
 * `grace_period::T2 = 50`: how long to wait between adjustments
 * `tighten_wait::T2 = 30`: how long to wait between tightenings
