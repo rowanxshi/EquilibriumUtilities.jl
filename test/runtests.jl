@@ -25,16 +25,16 @@ end
 		SSR = sum((y .- ỹ).^2)/length(y)
 		y̅ = sum(y)/length(y)
 		VAR = sum((y .- y̅).^2)/length(y)
-		SSR/VAR
+		(SSR/VAR)*100
 	end
-	@test log_lin(FiniteCES.s_old, FiniteCES.c) ≤ 1e-3
+	@test log_lin(FiniteCES.s_old, FiniteCES.c) ≤ 0.1
 
 	# not log with few firms
-	N = 10
+	N = 5
 	resize!.((FiniteCES.c, FiniteCES.s_new, FiniteCES.s_old), N)
-	FiniteCES.c .= range(1, step = 5, length = N)
-	EquilibriumUtilities.converge(update, step_diff, init)
-	@test log_lin(FiniteCES.s_old, FiniteCES.c) ≥ 0.1
+	FiniteCES.c .= range(1, step = 1.5, length = N)
+	EquilibriumUtilities.converge(update, step_diff, init; max_iter = 500)
+	@test log_lin(FiniteCES.s_old, FiniteCES.c) ≥ 10
 	
 	# test symmetric case
 	FiniteCES.c .= 2

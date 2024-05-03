@@ -1,26 +1,25 @@
 module FiniteCES
 using Main.EquilibriumUtilities
 
-const σ = 5 # CES parameter
+const σ = 3 # CES parameter
 const c = collect(1:0.1:20) # the marginal costs of the participants
 const s_old = Vector{Float64}(undef, length(c)) # vector to hold shares guesses
 const s_new = Vector{Float64}(undef, length(c)) # vector to hold implied shares
 
 function init()
 	# initial guess: even shares
-	fill!(s_old, length(s_old)^(-1))
+	fill!(s_old, inv(length(s_old)))
 end
 function step_diff()
 	# using s_old, compute implied prices and store in s_new
 	for firm in eachindex(s_old)
-		ε = s_old[firm] + (1 - s_old[firm])*σ
-		μ = ε/(ε - 1)
-		s_new[firm] = μ*c[firm]^(1 - σ)
+		s = s_old[firm]
+		ε = s + (one(s) - s)*σ
+		μ = ε/(ε - one(ε))
+		s_new[firm] = μ*c[firm]^(one(ε) - σ)
 	end
-	
 	# divide by price index for shares
 	normalise!(s_new, sum(s_new))
-	
 	return infnorm_pctdev(s_old, s_new)
 end
 function update()
