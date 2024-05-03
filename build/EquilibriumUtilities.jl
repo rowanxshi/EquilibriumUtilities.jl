@@ -24,14 +24,6 @@ end
 If `x` is zero, return `one(x)`. Otherwise, return `x`. Useful for safely dividing by `x`.
 """
 zero_safe(x) = iszero(x) ? one(x) : x
-function quietly(f::Function)
-	out = Logging.with_logger(Logging.NullLogger()) do
-		f()
-	end
-	out
-end
-
-# ARRAY VIEWS
 """
 	chunk(V::AbstractVector, N::Integer)
 
@@ -47,16 +39,16 @@ function diag_view(mat::AbstractMatrix)
 
 	@view mat[1:(S+1):end]
 end
-function offdiag_view(mat::AbstractMatrix)
-	!issquare(mat) && error("matrix is not square: $mat")
-	N = first(size(mat))
-	isdiagind = in(1:(N+1):(N^2))
-	offdiaginds = .!(isdiagind.(eachindex(mat)))
-	@views mat[offdiaginds]
-end
 function issquare(mat::AbstractMatrix)
 	dims = size(mat)
 	isequal(dims...) 
+end
+
+function quietly(f::Function)
+	out = Logging.with_logger(Logging.NullLogger()) do
+		f()
+	end
+	out
 end
 
 include("WrappedDict.jl")
@@ -64,6 +56,6 @@ include("ConvergenceState.jl")
 include("solvers.jl")
 include("prettyprinting.jl")
 
-export newton, converge, infnorm_pctdev, normalise!, zero_safe, chunk, issquare, quietly, diag_view, dampen, update!, WrappedDict
+export newton, converge, v_diff, normalise!, zero_safe, chunk, issquare, quietly, diag_view, dampen, update!, WrappedDict
 
 end

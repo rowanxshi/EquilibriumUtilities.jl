@@ -87,26 +87,26 @@ function newton(f::Function, f′::Function, x, p::NewtonParameters)
 end
 
 """
-	ConvergeParameters{T1 <: Real, T2 <: AbstractVector{<: T1}, T3 <: Integer, T4}
+	ConvergeParameters
 
 Contains optional parameters for the [`converge`](@ref) solver.
 
 See also [`converge`](@ref).
 
 ## Fields
-* `diff_tol::T1 = 1e-6`: If the value returned by `step_diff` is less than this tolerance, stop.
-* `up_tol::T1 = zero(diff_tol)`: If the value returned by `update` is less than this tolerance, stop.
-* `history::T2 = Vector{T1}()`: Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
+* `diff_tol::Real = 1e-6`: If the value returned by `step_diff` is less than this tolerance, stop.
+* `up_tol::Real = zero(diff_tol)`: If the value returned by `update` is less than this tolerance, stop.
 * `max_iter::Integer = 200`: Maximum number of iterations before giving up.
 * `msg = "No convergence"`: Warning message to display if there isn't convergence within the maximum number of iterations.
+* `history = empty!(cs.history)`: Container in which to store the iteration history of `diff`s. Useful to check speed of convergence. If `nothing` is provided, saves no history.
 * `verbose::Bool = false`: Print the `diff` every iteration?
 """
-@kwdef struct ConvergeParameters{T1 <: Real, T2 <: AbstractVector{<: T1}, T3 <: Integer, T4}
-	diff_tol::T1 = 1e-6
-	up_tol::T1 = zero(diff_tol)
-	history::T2 = Vector{T1}()
-	max_iter::T3 = 200
-	msg::T4 = "No convergence"
+@kwdef struct ConvergeParameters{T1, T2 <: Real, T3 <: Real, T4 <: Integer, T5}
+	history::T1 = empty!(cs.history)
+	diff_tol::T2 = 1e-6
+	up_tol::T3 = zero(diff_tol)
+	max_iter::T4 = 200
+	msg::T5 = "No convergence"
 	verbose::Bool = false
 end
 const default_convergence_parameters = ConvergeParameters()
@@ -120,7 +120,7 @@ The function returns a pair of booleans, the first of which signals whether conv
 
 For an example, see this package's tests which uses this function to solve the finite-firm CES game.
 
-See also [`ConvergeParameters`](@ref), [`update!`](@ref), [`dampen`](@ref), [`infnorm_pctdev`](@ref).
+See also [`ConvergeParameters`](@ref), [`update!`](@ref), [`dampen`](@ref), [`v_diff`](@ref).
 
 """
 function converge(update::Function, step_diff::Function, init::Function; kw...)
@@ -154,25 +154,37 @@ function converge(update::Function, step_diff::Function, init::Function, p::Conv
 end
 
 """
-	update!(main, secondary; dampen = 1.0, norm = infnorm_pctdev, cs = cs, dampen_kw...)
+	update!(main, secondary; dampen = 1.0, v_diff = v_diff, cs = cs, dampen_kw...)
 
-Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration). Returns the `norm` of the update step (useful for breaking iteration if the step size is too small).
+Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration). Returns the `v_diff` of the update step (useful for breaking iteration if the step size is too small).
 
 If `dampen` is set at `1.0`, [`dynamic_dampen`](@ref)ing is used.
 """
-function update!(main, secondary; cs = cs, dampen = 1.0, norm = infnorm_pctdev, dampen_kw...)
+function update!(main, secondary; cs = cs, dampen = 1.0, v_diff = v_diff, dampen_kw...)
 	_dampen = isone(dampen) ? dynamic_dampen!(cs; dampen_kw...)[:dampen] : dampen
 	for (i_main, i_sec) in zip(eachindex(main), eachindex(secondary))
 		main[i_main], secondary[i_sec] = secondary[i_sec], main[i_main]
 		main[i_main] += _dampen*(secondary[i_sec] - main[i_main])
 	end
-	norm(secondary, main)
+	v_diff(secondary, main)
 end
-function infnorm_pctdev(v1, v2)
-	maximum(abs_pct_dev, zip(v1, v2))
+function update(main, secondary; cs = cs, dampen = 1.0, dampen_kw...)
+	_dampen = isone(dampen) ? dynamic_dampen!(cs; dampen_kw...)[:dampen] : dampen
+	main, secondary = secondary, main
+	main += _dampen*(secondary - main)
+	main, secondary
 end
-abs_pct_dev((n1, n2)) = abs(n2 - n1)/zero_safe(n1)
 
+"""
+	v_diff(v1, v2)
+
+Calculate the distance between two vectors as the sum of element-wise absolute difference.
+"""
+function v_diff(v1, v2)
+	maximum(zip(v1, v2)) do (x1, x2)
+		abs(x1 - x2)
+	end
+end
 
 # DYNAMIC DAMPENING
 """

@@ -21,11 +21,11 @@ function step_diff()
 	# divide by price index for shares
 	normalise!(s_new, sum(s_new))
 	
-	return v_diff(s_old, s_new)
+	return infnorm_pctdev(s_old, s_new)
 end
 function update()
 	# use the average between guess and implied shares
-	up_diff = v_diff(s_new, s_old)/2
+	up_diff = infnorm_pctdev(s_new, s_old)/2
 	s_old .+= s_new
 	s_old ./= 2
 	up_diff
