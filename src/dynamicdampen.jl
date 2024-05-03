@@ -28,6 +28,22 @@ end
 const ds = DampenState()
 
 # DYNAMIC DAMPENING
+"""
+	struct DampenParameters{T1 <: Real, T2 <: Integer}
+
+Parameters for [`dynamicdampen!`](@ref).
+
+## Fields
+* `loosen::T1 = -0.01`: by how much to loosen the dampening factor
+* `tighten::T1 = 0.01`: by how much to tighten the dampening factor
+* `min_dampen::T1 = 0.0`: the minimum value for the dampen factor
+* `max_dampen::T1 = 0.999`: the maximum value for the dampen factor
+* `scale::T1 = 0.925`: by how much to scale the reference deviation
+* `overshooting_share::T1 = 0.5`: the share for [`isovershooting`](@ref)
+* `grace_period::T2 = 50`: how long to wait between adjustments
+* `tighten_wait::T2 = 30`: how long to wait between tightenings
+* `loosen_wait::T2 = 40`: how long to wait between loosenings
+"""
 @kwdef struct DampenParameters{T1 <: Real, T2 <: Integer}
 	loosen::T1 = -0.01
 	tighten::T1 = 0.01
@@ -84,7 +100,7 @@ Checks if iteration is on a bad path, by seeing if two of the past three iterati
 * the difference blows up (if updating is _too_ aggressive)
 * the difference oscillates between improving and worsening (if updating is a little too aggressive)
 
-See also [`dynamicdampen`](@ref).
+See also [`dynamicdampen!`](@ref).
 """
 function isdiverging(history)
 	(length(history) ≤ 3) && return false
@@ -98,7 +114,7 @@ end
 
 Check if the convergence is overshooting each guess, as measured by a `share` of the deviations flipping signs between the last two iterations. If dampening isn't strong enough, the deviations alternate between positive and negative, wasting time by bouncing back and forth. Increasing the dampening can drastically speed up convergence by preventing this oscillation.
 
-See also [`dynamicdampen`](@ref).
+See also [`dynamicdampen!`](@ref).
 """
 function isovershooting(last_deviations, penultimate_deviations; share = 0.5)
 	(isempty(last_deviations) || isempty(penultimate_deviations)) && return false
