@@ -104,7 +104,7 @@ See also [`converge`](@ref).
 @kwdef struct ConvergeParameters{T1 <: Real, T2 <: AbstractVector{<: T1}, T3 <: Integer, T4}
 	diff_tol::T1 = 1e-6
 	up_tol::T1 = zero(diff_tol)
-	history::T2 = Vector{T1}()
+	history::T2 = Float64[]
 	max_iter::T3 = 200
 	msg::T4 = "No convergence"
 	verbose::Bool = false
