@@ -6,7 +6,7 @@ function Base.show(io::IO, m::MIME"text/plain", s::ListPrint)
 	end
 end
 """
-	pretty(s::WrappedDict, var_names = keys(s); kw...)
+	pretty(s, var_names = keys(s); kw...)
 
 Return a string version of `s` for pretty-printing.
 	
