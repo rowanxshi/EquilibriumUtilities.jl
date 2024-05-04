@@ -13,7 +13,7 @@ See also [`converge`](@ref).
 * `verbose::Bool = false`: Print the `diff` every iteration?
 """
 @kwdef struct ConvergeParameters{T1 <: Real, T2 <: Integer, T3}
-	diff_tol::T1 = 1e-6
+	diff_tol::T1 = 1e-3
 	up_tol::T1 = zero(diff_tol)
 	max_iter::T2 = 200
 	msg::T3 = "No convergence"
@@ -67,9 +67,13 @@ end
 abs_pct_dev((n1, n2)) = abs(n2 - n1)/zero_safe(n1)
 
 """
-	update!(main, secondary; norm = infnorm_pctdev, dampen = 0.5)
+Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration).
 
-Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration). Returns the `norm` of the update step (useful for breaking iteration if the step size is too small).
+Returns the `norm` of the update step (useful for breaking iteration if the step size is too small).
+"""
+function update! end
+"""
+	update!(main, secondary; norm = infnorm_pctdev, dampen = 0.5)
 """
 function update!(main, secondary; dampen = 0.5, norm = infnorm_pctdev)
 	for (i_main, i_sec) in zip(eachindex(main), eachindex(secondary))
