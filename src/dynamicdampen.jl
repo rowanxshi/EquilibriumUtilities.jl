@@ -10,6 +10,8 @@
 * `last_deviations::T2 = Float64[]` for storing deviations from the last iteration
 * `penultimate_deviations::T2 = Float64[]` for storing deviations from the penultimate iteration
 * `history::T2 = Float64[]` for storing the history of `diff`s
+
+See also [`dynamicdampen!`](@ref), [`dampenfactor`](@ref), [`dampenfactor!`](@ref).
 """
 @kwdef struct DampenState{T <: AbstractVector{<: Real}}
 	dampenstats::T = [0.85; Inf; Inf; Inf]
@@ -24,7 +26,7 @@ function initiate_deviations!(ds::DampenState, C::Int)
 	fill!(ds.last_deviations, Inf)
 end
 function reset_dampenstats!(ds::DampenState)
-	ds.dampenstats[1] = 0.85;
+	dampenfactor!(ds, 0.85)
 	@. ds.dampenstats[2:4] = Inf;
 end
 const ds = DampenState()
@@ -32,6 +34,22 @@ function reset!(ds::DampenState)
 	initiate_deviations!(ds, length(ds.last_deviations))
 	reset_dampenstats!(ds)
 	empty!(ds.history)
+end
+
+# INTEGRATED METHODS
+"""
+	converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
+
+Wrapper that `push!`es the calculated `diff` to `ds.history`, so that `ds` is up-to-date.
+"""
+function converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
+	step_diff!() = let step_diff = step_diff, ds = ds
+		push!(ds.history, step_diff())
+	end
+	converge(update, step_diff!, init, p)
+end
+function converge(update::Function, step_diff::Function, init::Function, ds::DampenState; kw...)
+	converge(update, step_diff, init, ds, ConvergeParameters(; kw...))
 end
 """
 	update!(main, secondary, ds::DampenState; kw...)
@@ -44,8 +62,26 @@ function update!(main, secondary, ds::DampenState; kw...)
 	dampen = dampenfactor(dynamicdampen!(ds))
 	update!(main, secondary; kw..., dampen)
 end
+
+"""
+	dampenfactor(ds::DampenState)
+
+Retrieve the dampen factor from `ds`.
+
+See also [`dampenfactor!`](@ref), [`DampenState`](@ref).
+"""
 function dampenfactor(ds::DampenState)
 	first(ds.dampenstats)
+end
+"""
+	dampenfactor!(ds::DampenState, factor)
+
+Set the dampen factor in `ds`.
+
+See also [`dampenfactor`](@ref), [`DampenState`](@ref).
+"""
+function dampenfactor!(ds::DampenState, dampen)
+	ds.dampenstats[1] = dampen
 end
 
 # DYNAMIC DAMPENING
@@ -79,7 +115,6 @@ end
 function dynamicdampen!(ds::DampenState; kw...)
 	dynamicdampen!(ds, DampenParameters(; kw...))
 end
-
 """
 	dynamicdampen!(ds::DampenState, p::DampenParameters)
 
