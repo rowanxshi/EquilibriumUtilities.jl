@@ -41,7 +41,7 @@ Update using a dynamically-chosen dampening factor, which takes precedence over 
 See also [`dynamicdampen!`](@ref), [`DampenState`](@ref).
 """
 function update!(main, secondary, ds::DampenState; kw...)
-	dampen = dynamicdampen!(ds).dampen
+	dampen = dampenfactor(dynamicdampen!(ds))
 	update!(main, secondary; kw..., dampen)
 end
 function dampenfactor(ds::DampenState)
