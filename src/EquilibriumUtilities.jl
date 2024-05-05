@@ -33,9 +33,9 @@ end
 
 include("arrayviews.jl")
 include("WrappedDict.jl")
-include("dynamicdampen.jl")
 include("newton.jl")
 include("converge.jl")
+include("dynamicdampen.jl")
 include("prettyprinting.jl")
 
 export newton, converge, infnorm_pctdev, normalise!, zero_safe, chunk, issquare, quietly, diag_view, update!, WrappedDict
