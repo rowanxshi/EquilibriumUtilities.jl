@@ -44,7 +44,7 @@ Wrapper that `push!`es the calculated `diff` to `ds.history`, so that `ds` is up
 """
 function converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
 	step_diff!() = let step_diff = step_diff, ds = ds
-		push!(ds.history, step_diff())
+		push!(ds.history, step_diff()) |> last
 	end
 	converge(update, step_diff!, init, p)
 end
