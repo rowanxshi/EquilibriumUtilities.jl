@@ -1,7 +1,8 @@
 """
 	struct DampenState{T <: AbstractVector{<: Real}}
 
-## Fields
+Fields
+===
 * `dampenstats::T = [0.85; Inf; Inf; Inf]`: contains, in order,
     * the dampening factor
     * number of iterations since the dampening factor lowered
@@ -35,34 +36,6 @@ function reset!(ds::DampenState)
 	reset_dampenstats!(ds)
 	empty!(ds.history)
 end
-
-# INTEGRATED METHODS
-"""
-	converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
-
-Wrapper that `push!`es the calculated `diff` to `ds.history`, so that `ds` is up-to-date.
-"""
-function converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
-	step_diff!() = let step_diff = step_diff, ds = ds
-		push!(ds.history, step_diff()) |> last
-	end
-	converge(update, step_diff!, init, p)
-end
-function converge(update::Function, step_diff::Function, init::Function, ds::DampenState; kw...)
-	converge(update, step_diff, init, ds, ConvergeParameters(; kw...))
-end
-"""
-	update!(main, secondary, ds::DampenState; kw...)
-
-Update using a dynamically-chosen dampening factor, which takes precedence over the keyword argument `dampen`.
-
-See also [`dynamicdampen!`](@ref), [`DampenState`](@ref).
-"""
-function update!(main, secondary, ds::DampenState; kw...)
-	dampen = dampenfactor(dynamicdampen!(ds))
-	update!(main, secondary; kw..., dampen)
-end
-
 """
 	dampenfactor(ds::DampenState)
 
@@ -90,7 +63,8 @@ end
 
 Parameters for [`dynamicdampen!`](@ref).
 
-## Fields
+Fields
+===
 * `loosen::T1 = -0.01`: by how much to loosen the dampening factor
 * `tighten::T1 = 0.01`: by how much to tighten the dampening factor
 * `min_dampen::T1 = 0.0`: the minimum value for the dampen factor
@@ -112,11 +86,8 @@ Parameters for [`dynamicdampen!`](@ref).
 	tighten_wait::T2 = 30
 	loosen_wait::T2 = 40
 end
-function dynamicdampen!(ds::DampenState; kw...)
-	dynamicdampen!(ds, DampenParameters(; kw...))
-end
 """
-	dynamicdampen!(ds::DampenState, p::DampenParameters)
+	dynamicdampen!(ds::DampenState; kw...)
 
 Update the dampening factor based on convergence path. Strategy:
 * increase by `ds.tighten` if `ds.history` [`isdiverging`](@ref) or [`isovershooting`](@ref)
@@ -126,8 +97,15 @@ Update the dampening factor based on convergence path. Strategy:
     - it has been under `p.loosen_wait` iterations since the last loosening
     - the current difference is above `p.scale*ds.reference_diff`
 * otherwise, decrease by `loosen`
+Fine tune control through keyword arguments; see [`DampenParameters`](@ref).
 
 See also [`DampenState`](@ref), [`DampenParameters`](@ref).
+"""
+function dynamicdampen!(ds::DampenState; kw...)
+	dynamicdampen!(ds, DampenParameters(; kw...))
+end
+"""
+	dynamicdampen!(ds::DampenState, p::DampenParameters)
 """
 function dynamicdampen!(ds::DampenState, p::DampenParameters)
 	(; dampenstats, last_deviations, penultimate_deviations, history) = ds
@@ -180,4 +158,31 @@ function isovershooting(last_deviations, penultimate_deviations; share = 0.5)
 		signbit(last) ⊻ signbit(penultimate)
 	end
 	overshot ≥ share*length(last_deviations)
+end
+
+# INTEGRATED METHODS
+"""
+	converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
+
+Wrapper that `push!`es the calculated `diff` to `ds.history`, so that `ds` is up-to-date.
+"""
+function converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
+	step_diff!() = let step_diff = step_diff, ds = ds
+		push!(ds.history, step_diff()) |> last
+	end
+	converge(update, step_diff!, init, p)
+end
+function converge(update::Function, step_diff::Function, init::Function, ds::DampenState; kw...)
+	converge(update, step_diff, init, ds, ConvergeParameters(; kw...))
+end
+"""
+	update!(main, secondary, ds::DampenState; kw...)
+
+Update using a dynamically-chosen dampening factor. However, if the user supplies the keyword argument `dampen`, it takes precedence over dynamically-chosen dampening factor.
+
+See also [`dynamicdampen!`](@ref), [`DampenState`](@ref).
+"""
+function update!(main, secondary, ds::DampenState; kw...)
+	dampen = dampenfactor(dynamicdampen!(ds))
+	update!(main, secondary; dampen, kw...)
 end

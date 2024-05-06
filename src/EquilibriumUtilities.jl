@@ -24,6 +24,11 @@ end
 If `x` is zero, return `one(x)`. Otherwise, return `x`. Useful for safely dividing by `x`.
 """
 zero_safe(x) = iszero(x) ? one(x) : x
+"""
+	quietly(f::Function)
+
+Execute something without logging it (sends logs to `Logging.NullLogger()`).
+"""
 function quietly(f::Function)
 	out = Logging.with_logger(Logging.NullLogger()) do
 		f()
@@ -38,6 +43,11 @@ include("converge.jl")
 include("dynamicdampen.jl")
 include("prettyprinting.jl")
 
-export newton, converge, infnorm_pctdev, normalise!, zero_safe, chunk, issquare, quietly, diag_view, update!, WrappedDict
+export normalise!, zero_safe, quietly
+export chunk, diag_view, offdiag_view, issquare
+export converge, update!, infnorm_pctdev
+# export
+export newton
+export WrappedDict
 
 end

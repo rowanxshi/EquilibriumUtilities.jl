@@ -1,3 +1,4 @@
+# MAIN FUNCTIONALITY
 """
 	ConvergeParameters{T1 <: Real, T2 <: Integer, T3}
 
@@ -5,7 +6,8 @@ Contains optional parameters for the [`converge`](@ref) solver.
 
 See also [`converge`](@ref).
 
-## Fields
+Fields
+===
 * `diff_tol::T1 = 1e-6`: If the value returned by `step_diff` is less than this tolerance, stop.
 * `up_tol::T1 = zero(diff_tol)`: If the value returned by `update` is less than this tolerance, stop.
 * `max_iter::T2 = 200`: Maximum number of iterations before giving up.
@@ -19,7 +21,6 @@ See also [`converge`](@ref).
 	msg::T3 = "No convergence"
 	verbose::Bool = false
 end
-
 """
 	converge(update::Function, step_diff::Function, init::Function; kw...) -> (converged, stalled_update)
 
@@ -37,6 +38,9 @@ See also [`update!`](@ref).
 function converge(update::Function, step_diff::Function, init::Function; kw...)
 	converge(update, step_diff, init, ConvergeParameters(; kw...))
 end
+"""
+	converge(update::Function, step_diff::Function, init::Function, p::ConvergeParameters)
+"""
 function converge(update::Function, step_diff::Function, init::Function, p::ConvergeParameters)
 	(; diff_tol, up_tol, max_iter, msg, verbose) = p
 	init()
@@ -61,19 +65,21 @@ function converge(update::Function, step_diff::Function, init::Function, p::Conv
 	!conv && @warn msg
 	conv, small_up
 end
-function infnorm_pctdev(v1, v2)
-	maximum(abs_pct_dev, zip(v1, v2))
-end
-abs_pct_dev((n1, n2)) = abs(n2 - n1)/zero_safe(n1)
 
 """
+Optional helper function to use when writing an `update()` function for [`converge`](@ref).
+
 Update `main` according to `secondary`, with a `dampen`ing factor. Useful for iterative algorithms. Once complete, `main` will hold the updated value and `secondary` will hold main's original value (to keep a record of previous iteration).
 
 Returns the `norm` of the update step (useful for breaking iteration if the step size is too small).
+
+See also [`converge`](@ref).
 """
 function update! end
 """
 	update!(main, secondary; norm = infnorm_pctdev, dampen = 0.5)
+
+See [`infnorm_pctdev`](@ref).
 """
 function update!(main, secondary; dampen = 0.5, norm = infnorm_pctdev)
 	for (i_main, i_sec) in zip(eachindex(main), eachindex(secondary))
@@ -82,6 +88,15 @@ function update!(main, secondary; dampen = 0.5, norm = infnorm_pctdev)
 	end
 	norm(secondary, main)
 end
+"""
+	infnorm_pctdev(v1, v2)
+
+Calculates the difference between two vectors by finding the maximum absolute percentage deviation.
+"""
+function infnorm_pctdev(v1, v2)
+	maximum(abs_pct_dev, zip(v1, v2))
+end
+abs_pct_dev((n1, n2)) = abs(n2 - n1)/zero_safe(n1)
 
 function bisection(f::Function, interval; converge_kw...)
 	init!() = let interval = interval

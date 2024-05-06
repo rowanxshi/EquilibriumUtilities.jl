@@ -5,7 +5,8 @@ Contains optional parameters for the [`newton`](@ref) solver.
 
 See also [`newton`](@ref).
 
-## Fields
+Fields
+===
 * `verbose::Bool = false`: Print some info every iteration?
 * `step_tol::Float64 = 1e-8`: If the (absolute value of) step size is smaller than this tolerance, stop.
 * `f_tol::Float64 = step_tol`: If the (absolute value of) function value is smaller than this tolerance, stop.
@@ -24,7 +25,6 @@ See also [`newton`](@ref).
 	r::T4 = Inf
 end
 const default_newton_parameters = NewtonParameters()
-
 """
 Simple Newton method implementation.
 
@@ -85,4 +85,3 @@ function newton(f::Function, f′::Function, x, p::NewtonParameters)
 	end
 	newton(f_f′, x, p)
 end
-
