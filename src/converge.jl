@@ -41,7 +41,7 @@ end
 """
 	converge(update::Function, step_diff::Function, init::Function, p::ConvergeParameters)
 """
-function converge(update::Function, step_diff::Function, init::Function, p::ConvergeParameters)
+function converge(update::A, step_diff::B, init::C, p::ConvergeParameters) where {A, B, C}
 	(; diff_tol, up_tol, max_iter, msg, verbose) = p
 	init()
 	diff = one(diff_tol) + diff_tol;
