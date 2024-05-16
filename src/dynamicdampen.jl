@@ -162,18 +162,18 @@ end
 
 # INTEGRATED METHODS
 """
-	converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
+	converge(update::Function, step_diff::Function, ds::DampenState, p::ConvergeParameters)
 
 Wrapper that `push!`es the calculated `diff` to `ds.history`, so that `ds` is up-to-date.
 """
-function converge(update::Function, step_diff::Function, init::Function, ds::DampenState, p::ConvergeParameters)
+function converge(update::Function, step_diff::Function, ds::DampenState, p::ConvergeParameters)
 	step_diff!() = let step_diff = step_diff, ds = ds
 		push!(ds.history, step_diff()) |> last
 	end
-	converge(update, step_diff!, init, p)
+	converge(update, step_diff!, p)
 end
-function converge(update::Function, step_diff::Function, init::Function, ds::DampenState; kw...)
-	converge(update, step_diff, init, ds, ConvergeParameters(; kw...))
+function converge(update::Function, step_diff::Function, ds::DampenState; kw...)
+	converge(update, step_diff, ds, ConvergeParameters(; kw...))
 end
 """
 	update!(main, secondary, ds::DampenState; kw...)

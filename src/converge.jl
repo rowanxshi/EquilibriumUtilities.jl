@@ -22,9 +22,9 @@ Fields
 	verbose::Bool = false
 end
 """
-	converge(update::Function, step_diff::Function, init::Function; kw...) -> (converged, stalled_update)
+	converge(update::Function, step_diff::Function; kw...) -> (converged, stalled_update)
 
-Iterate until convergence. In particular, the problem is initiated with `init()`. Then, repeatedly:
+Iterate until convergence. In particular, repeatedly:
 * apply `step_diff()` which should do an iteration step, then return the deviation
 * apply `update()`, which should return the size of the update
 until convergence. The convergence criterion is controlled by keyword arguments; see [`ConvergeParameters`](@ref).
@@ -35,20 +35,19 @@ For an example, see this package's tests which uses this function to solve the f
 
 See also [`update!`](@ref).
 """
-function converge(update::Function, step_diff::Function, init::Function; kw...)
-	converge(update, step_diff, init, ConvergeParameters(; kw...))
+function converge(update::Function, step_diff::Function; kw...)
+	converge(update, step_diff, ConvergeParameters(; kw...))
 end
 """
-	converge(update::Function, step_diff::Function, init::Function, p::ConvergeParameters)
+	converge(update::Function, step_diff::Function, p::ConvergeParameters)
 """
-function converge(update::A, step_diff::B, init::C, p::ConvergeParameters) where {A, B, C}
+function converge(update::A, step_diff::B, p::ConvergeParameters) where {A, B}
 	(; diff_tol, up_tol, max_iter, msg, verbose) = p
-	init()
 	diff = one(diff_tol) + diff_tol;
 	small_up = false
 	conv = false
 	
-	if verbose && (max_iter > 0)
+	if verbose && (max_iter > zero(max_iter))
 		meter = ProgressMeter.ProgressThresh(diff_tol; color=:blue, output=stdout, showspeed=true)
 	end
 	for iter in 1:max_iter
@@ -99,10 +98,6 @@ end
 abs_pct_dev((n1, n2)) = abs(n2 - n1)/zero_safe(n1)
 
 function bisection(f::Function, interval; converge_kw...)
-	init!() = let interval = interval
-		!(length(interval) == 2) && error("provided interval doesn't have two points")
-		sort!(interval)
-	end
 	diff!() = let f = f, interval = interval
 		f(sum(interval)/2)
 	end
@@ -121,5 +116,7 @@ function bisection(f::Function, interval; converge_kw...)
 			abs(old - new)
 		end
 	end
-	converge(update!, diff!, init!; converge_kw...)
+	!(length(interval) == 2) && error("provided interval doesn't have two points")
+	sort!(interval)
+	converge(update!, diff!; converge_kw...)
 end
