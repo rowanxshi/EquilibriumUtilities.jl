@@ -35,6 +35,7 @@ function reset!(ds::DampenState)
 	initiate_deviations!(ds, length(ds.last_deviations))
 	reset_dampenstats!(ds)
 	empty!(ds.history)
+	ds
 end
 """
 	dampenfactor(ds::DampenState)
@@ -121,7 +122,7 @@ function dynamicdampen!(ds::DampenState, p::DampenParameters)
 		dampenstats[2] += one(last_loosened)
 		dampenstats[3] += one(last_tightened)
 	else
-		dampen += loosen
+		dampenstats[1] += loosen
 		dampenstats[2] = zero(last_loosened)
 		dampenstats[3] += one(last_tightened)
 		@debug "loosened from $(dampen - loosen) to $dampen"
