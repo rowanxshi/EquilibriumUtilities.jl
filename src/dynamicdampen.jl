@@ -187,3 +187,32 @@ function update!(main, secondary, ds::DampenState; kw...)
 	dampen = dampenfactor(dynamicdampen!(ds))
 	update!(main, secondary; dampen, kw...)
 end
+
+function update!(v::AbstractVector, dev; dampen)
+	for (i, d) in zip(eachindex(v), Iterators.cycle(dev))
+		v[i] =  update(v[i], d; dampen)
+	end
+	v
+end
+"""
+	update(x, dev; dampen = zero(dev), rev = false)
+
+Update the value of `x` according to some deviation `dev`. If `dev` is positive, then `x` will increase; if `dev` is negative, then `x` will decrease.
+
+Updating is concave; that is, `x` is updated at a slower rate the larger `dev` gets (to prevent over-updating). The maximum amount that `x` will get updated is by `2*(1 - dampen)` times. 
+
+Keywords
+===
+* `dampen = zero(dev)`: in addition to the concave updating, by how much should the updating dampen?
+* `rev = false`: if true, then a positive `dev` will decrease `x`, a negative `dev` will increase `x`.
+"""
+function update(x, dev; dampen = zero(dev), rev = false)
+	rev && (dev *= -one(dev))
+	percentage = if isinf(exp(dev))
+		one(dev)
+	else
+		(exp(dev) - one(dev))/(exp(dev) + one(dev))
+	end
+	x *= (one(dampen) + (one(dampen) - dampen)*percentage)
+end
+
